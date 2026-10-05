@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useReveal } from "../lib/useReveal";
-import { supabase } from "../lib/supabase";
+import { signInWithGoogle as startGoogleSignIn } from "../lib/nativeAuth";
+import { useDarkStatusBar } from "../lib/nativeUi";
+import { isIOS, isNative } from "../lib/platform";
 import { GoogleIcon } from "../components/GoogleIcon";
 import { Words } from "../components/Words";
+import { AppleButton } from "../components/AppleButton";
+import { BrandMark, Wordmark } from "../components/Brand";
 
 export function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   useReveal(pageRef);
+  useDarkStatusBar();
 
   // Supabase sends OAuth failures back as ?error=...&error_description=...
   useEffect(() => {
@@ -23,19 +28,16 @@ export function AuthPage() {
   async function signInWithGoogle() {
     setError(null);
     setBusy(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/`,
-        queryParams: { access_type: "offline", prompt: "select_account" },
-      },
+    const error = await startGoogleSignIn("/", {
+      access_type: "offline",
+      prompt: "select_account",
     });
-    if (error) {
-      setError(error.message);
-      setBusy(false);
-    }
-    // On success the browser navigates away to Google.
+    if (error) setError(error);
+    // On the web the page is navigating away to Google; in the app the sign-in sheet has closed.
+    if (error || isNative) setBusy(false);
   }
+
+  const appleToo = isNative && isIOS;
 
   return (
     <div
@@ -55,16 +57,14 @@ export function AuthPage() {
       </div>
 
       {/* Brand panel */}
-      <div className="relative flex flex-col justify-center px-6 py-10 text-white md:w-1/2 md:px-16">
-        <div className="flex items-center gap-3" data-reveal>
-          <img
-            src="/logo.png"
-            alt="MatchReview"
-            className="float size-14 drop-shadow-[0_10px_24px_rgba(212,232,70,.4)]"
-          />
-          <span className="text-2xl font-bold tracking-tight">MatchReview</span>
+      <div className="relative flex flex-col justify-center px-6 pb-10 pt-[calc(env(safe-area-inset-top)+2.5rem)] text-white md:w-1/2 md:px-16 md:pt-10">
+        <div className="flex flex-col items-start gap-5" data-reveal>
+          <BrandMark tile className="float size-16 rounded-[22%] shadow-2xl" />
+          <h2 aria-label="WhosMyOpponent">
+            <Wordmark onDark className="text-[2.1rem] md:text-6xl" />
+          </h2>
         </div>
-        <h1 className="mt-8 text-3xl font-bold leading-[1.1] md:text-6xl">
+        <h1 className="mt-6 text-2xl font-bold leading-[1.15] text-white md:text-4xl">
           <Words
             text="Know every opponent before your players step on court."
             start={150}
@@ -88,18 +88,19 @@ export function AuthPage() {
           data-reveal
           style={{ ["--d" as string]: "450ms" }}
         >
-          <div className="w-full rounded-t-3xl bg-white p-6 shadow-2xl md:rounded-3xl md:p-8">
+          <div className="w-full rounded-t-3xl bg-white p-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] shadow-2xl md:rounded-3xl md:p-8">
             <h2 className="text-xl font-bold">Sign in to continue</h2>
             <p className="mt-1 text-sm text-slate-500">
-              New here? Signing in with Google creates your coach account
-              automatically.
+              New here? Signing in with {appleToo ? "Apple or Google" : "Google"}{" "}
+              creates your coach account automatically.
             </p>
 
+            <AppleButton className="mt-6" onError={setError} />
             <button
               type="button"
               onClick={signInWithGoogle}
               disabled={busy}
-              className="btn-secondary lift mt-6 w-full py-3 text-base"
+              className={`btn-secondary lift w-full py-3 text-base ${appleToo ? "mt-3" : "mt-6"}`}
             >
               <GoogleIcon />
               {busy ? "Redirecting…" : "Continue with Google"}
@@ -112,8 +113,8 @@ export function AuthPage() {
             )}
 
             <p className="mt-6 text-center text-xs text-slate-400">
-              We only use your Google account to sign you in. Nothing is posted
-              on your behalf.
+              We only use your {appleToo ? "account" : "Google account"} to sign
+              you in. Nothing is posted on your behalf.
             </p>
           </div>
         </div>

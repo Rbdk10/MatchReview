@@ -160,7 +160,7 @@ site_url = "https://matchreview.netlify.app"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://matchreview.netlify.app", "https://matchreview.netlify.app/**", "http://localhost:5173", "http://localhost:5173/**", "http://127.0.0.1:5173", "http://127.0.0.1:5173/**"]
+additional_redirect_urls = ["https://matchreview.netlify.app", "https://matchreview.netlify.app/**", "http://localhost:5173", "http://localhost:5173/**", "http://127.0.0.1:5173", "http://127.0.0.1:5173/**", "matchreview://auth-callback"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -328,8 +328,9 @@ url = ""
 skip_nonce_check = false
 
 [auth.external.apple]
-enabled = false
-client_id = ""
+# Native Sign in with Apple in the iOS app: the client id is the app's bundle id and no secret is needed.
+enabled = true
+client_id = "com.reubendeklerk.matchreview"
 # DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
 secret = "env(SUPABASE_AUTH_EXTERNAL_APPLE_SECRET)"
 # Overrides the default auth callback URL derived from auth.external_url.

@@ -5,6 +5,8 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { SPORTS, type Player, type Sport } from "../lib/types";
 import { Words } from "../components/Words";
+import { useDarkStatusBar } from "../lib/nativeUi";
+import { BrandLockup } from "../components/Brand";
 import {
   SchoolPicker,
   schoolFromProfile,
@@ -18,6 +20,7 @@ export function OnboardingPage() {
   const { session, profile, refreshProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const userId = session!.user.id;
+  useDarkStatusBar();
 
   const [step, setStep] = useState<Step>("welcome");
   const [dir, setDir] = useState<1 | -1>(1);
@@ -138,15 +141,8 @@ export function OnboardingPage() {
       </div>
 
       {/* Top bar */}
-      <header className="relative flex items-center justify-between px-6 py-5">
-        <div className="flex items-center gap-2">
-          <img
-            src="/logo.png"
-            alt=""
-            className="size-9 drop-shadow-[0_6px_14px_rgba(212,232,70,.35)]"
-          />
-          <span className="font-bold tracking-tight">MatchReview</span>
-        </div>
+      <header className="relative flex items-center justify-between px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
+        <BrandLockup onDark size="sm" />
         <button
           onClick={signOut}
           className="text-sm text-slate-300 hover:text-white"
@@ -173,7 +169,7 @@ export function OnboardingPage() {
 
       {/* Slide */}
       <main
-        className="relative mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-8"
+        className="relative mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 pb-[calc(env(safe-area-inset-bottom)+2rem)] pt-8"
         onKeyDown={onKey}
       >
         <div

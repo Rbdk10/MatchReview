@@ -2,9 +2,14 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { signInWithGoogle } from "../lib/nativeAuth";
+import { isNative } from "../lib/platform";
+import { useDarkStatusBar } from "../lib/nativeUi";
 import { useAuth } from "../lib/auth";
 import { forgetInvite, rememberInvite } from "../lib/invite";
 import { GoogleIcon } from "../components/GoogleIcon";
+import { AppleButton } from "../components/AppleButton";
+import { BrandLockup } from "../components/Brand";
 import { staffRoleLabel, type StaffRole } from "../lib/types";
 
 interface Preview {
@@ -25,6 +30,7 @@ export function JoinPage() {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  useDarkStatusBar();
 
   useEffect(() => {
     rememberInvite(token);
@@ -37,17 +43,10 @@ export function JoinPage() {
   async function signIn() {
     setBusy(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/join/${token}`,
-        queryParams: { prompt: "select_account" },
-      },
-    });
-    if (error) {
-      setError(error.message);
-      setBusy(false);
-    }
+    const error = await signInWithGoogle(`/join/${token}`);
+    if (error) setError(error);
+    // On the web the page is navigating away to Google; in the app the sign-in sheet has closed.
+    if (error || isNative) setBusy(false);
   }
 
   async function claim() {
@@ -94,11 +93,8 @@ export function JoinPage() {
   return (
     <div className="relative flex min-h-full flex-col overflow-hidden bg-court-900 text-white">
       <div className="aurora hue-drift" aria-hidden="true" />
-      <header className="relative flex items-center justify-between px-6 py-5">
-        <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="" className="size-9" />
-          <span className="font-bold tracking-tight">MatchReview</span>
-        </div>
+      <header className="relative flex items-center justify-between px-6 pb-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
+        <BrandLockup onDark size="sm" />
         {session && (
           <button
             onClick={signOut}
@@ -109,7 +105,7 @@ export function JoinPage() {
         )}
       </header>
 
-      <main className="relative mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-8">
+      <main className="relative mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 pb-[calc(env(safe-area-inset-bottom)+2rem)] pt-8">
         {!checked || loading ? (
           <p className="text-center text-slate-300">Checking your invite…</p>
         ) : done ? (
@@ -144,7 +140,7 @@ export function JoinPage() {
               onClick={forgetInvite}
               className="btn mt-8 bg-white/10 px-6 py-3 text-white hover:bg-white/20"
             >
-              Go to MatchReview
+              Go to WhosMyOpponent
             </Link>
           </div>
         ) : (
@@ -190,18 +186,25 @@ export function JoinPage() {
 
             <div className="mt-8 flex flex-col gap-3">
               {!session ? (
-                <button
-                  onClick={signIn}
-                  disabled={busy}
-                  className="btn lift bg-white py-3 text-base text-slate-900"
-                >
-                  <GoogleIcon />{" "}
-                  {busy ? "Redirecting…" : "Continue with Google to claim"}
-                </button>
+                <>
+                  <AppleButton
+                    label="Continue with Apple to claim"
+                    className="ring-1 ring-white/20"
+                    onError={setError}
+                  />
+                  <button
+                    onClick={signIn}
+                    disabled={busy}
+                    className="btn lift bg-white py-3 text-base text-slate-900"
+                  >
+                    <GoogleIcon />{" "}
+                    {busy ? "Redirecting…" : "Continue with Google to claim"}
+                  </button>
+                </>
               ) : alreadyCoach ? (
                 <p className="rounded-xl bg-amber-500/20 px-4 py-3 text-sm text-amber-100">
                   You&apos;re signed in with an account that already coaches a
-                  team. Sign out and use a different Google account to join as{" "}
+                  team. Sign out and use a different account to join as{" "}
                   {isStaffInvite ? roleLabel : "a player"}.
                 </p>
               ) : (

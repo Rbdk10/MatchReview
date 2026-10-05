@@ -300,7 +300,7 @@ export function StaffSection({ className = "" }: { className?: string }) {
             ? ""
             : inviteLink(invites[inviting.id])
         }
-        shareText={`${inviting?.name ?? ""}, join ${profile?.team_name || "our team"} on MatchReview:`}
+        shareText={`${inviting?.name ?? ""}, join ${profile?.team_name || "our team"} on WhosMyOpponent:`}
         onRegenerate={() => inviting && openInvite(inviting, true)}
         onClose={() => setInviting(null)}
       />

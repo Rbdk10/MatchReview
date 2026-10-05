@@ -1,5 +1,6 @@
 import { ShieldCheck } from "lucide-react";
 import { useAuth } from "../lib/auth";
+import { BrandMark } from "./Brand";
 import type { Role } from "../lib/types";
 
 /** Admin-only switcher: view the app as a coach or a player, for any team. */
@@ -106,7 +107,7 @@ export function AdminEmpty() {
       <AdminBar compact />
       <div className="grid flex-1 place-items-center px-6 text-center">
         <div className="max-w-sm">
-          <img src="/logo.png" alt="" className="mx-auto size-14" />
+          <BrandMark tile className="mx-auto size-14 rounded-[22%] shadow-sm ring-1 ring-black/10" />
           <h1 className="mt-4 text-xl font-bold">
             {noTeams ? "No teams yet" : "This team has no players yet"}
           </h1>

@@ -29,7 +29,7 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
         className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl">
+      <div className="relative w-full max-w-md rounded-t-2xl bg-white p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] shadow-xl sm:rounded-2xl sm:pb-5">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold">{title}</h2>
           <button

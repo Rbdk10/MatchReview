@@ -5,24 +5,13 @@ import { Home, Plus, School, Users, UserCircle, LogOut } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { staffRoleLabel } from "../lib/types";
 import { AdminBar } from "./AdminBar";
+import { tapFeedback } from "../lib/nativeUi";
 import { teamShortName } from "../lib/types";
+import { BrandLockup } from "./Brand";
 
 /** The team tab is named after the team itself, e.g. "MSU". */
 function teamLabel(name?: string | null) {
   return teamShortName(name);
-}
-
-function Logo() {
-  return (
-    <div className="flex items-center gap-2">
-      <img
-        src="/logo.png"
-        alt=""
-        className="size-9 drop-shadow-[0_6px_14px_rgba(212,232,70,.35)]"
-      />
-      <span className="text-lg font-bold tracking-tight">MatchReview</span>
-    </div>
-  );
 }
 
 export function Layout() {
@@ -62,12 +51,12 @@ export function Layout() {
     }`;
 
   return (
-    <div className="flex min-h-full">
+    <div className="flex min-h-full" data-sport={profile?.sport ?? "tennis"}>
       {/* Desktop sidebar */}
       <aside className="relative hidden w-64 shrink-0 flex-col overflow-hidden bg-court-900 p-4 text-white md:flex md:sticky md:top-0 md:h-screen">
         <div className="aurora aurora-sm opacity-60" aria-hidden="true" />
         <div className="relative">
-          <Logo />
+          <BrandLockup onDark size="sm" />
         </div>
         <NavLink
           to="/add"
@@ -123,8 +112,8 @@ export function Layout() {
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile header */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur md:hidden">
-          <Logo />
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white/90 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] backdrop-blur md:hidden">
+          <BrandLockup size="sm" />
           <NavLink
             to="/add"
             className="btn lift bg-court-600 px-3 py-2 text-white"
@@ -144,12 +133,13 @@ export function Layout() {
         </main>
 
         {/* Mobile bottom tab bar */}
-        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur keyboard-open:hidden md:hidden">
           <div className="mx-auto grid max-w-md grid-cols-5 items-end px-2">
             <MobileTab to="/" end label="Home" icon={Home} />
             <MobileTab to="/team" label={team} icon={School} />
             <NavLink
               to="/add"
+              onClick={tapFeedback}
               className="-mt-6 flex flex-col items-center justify-center pb-2 text-[11px] font-semibold text-court-700"
               aria-label="Add result"
             >
@@ -182,6 +172,7 @@ function MobileTab({
     <NavLink
       to={to}
       end={end}
+      onClick={tapFeedback}
       className={({ isActive }) =>
         `flex min-w-0 flex-col items-center gap-1 py-2 text-[11px] font-medium ${
           isActive ? "text-court-700" : "text-slate-500"

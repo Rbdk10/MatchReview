@@ -16,6 +16,7 @@ import {
   teamShortName,
   formatSets,
   ourSide,
+  partnerOf,
   type Opponent,
   type Player,
   type Result,
@@ -380,12 +381,22 @@ export function TeamPage() {
                     </span>
                     <div className="min-w-0">
                       <p className="truncate text-sm">
-                        <span className="font-semibold">{ourSide(r)}</span>{" "}
+                        {!isPlayer && (
+                          <>
+                            <span className="font-semibold">
+                              {ourSide(r)}
+                            </span>{" "}
+                          </>
+                        )}
                         <span className="text-slate-400">vs</span>{" "}
                         <span className="font-semibold">{theirSide(r)}</span>
                       </p>
                       <p className="text-xs text-slate-400">
-                        {r.format === "doubles" ? "Doubles · " : ""}
+                        {r.format === "doubles"
+                          ? isPlayer && me && partnerOf(r, me.id)
+                            ? `Doubles with ${partnerOf(r, me.id)} · `
+                            : "Doubles · "
+                          : ""}
                         {formatDate(r.played_on)}
                       </p>
                     </div>

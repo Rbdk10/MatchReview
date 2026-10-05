@@ -8,6 +8,7 @@ import {
   formatDate,
   formatSets,
   ourSide,
+  partnerOf,
   type Player,
   type ResultWithOpponent,
 } from "../lib/types";
@@ -80,8 +81,13 @@ export function HomePage() {
   return (
     <div className="space-y-6">
       <header data-reveal>
-        <h1 className="text-2xl font-bold">Hi {firstName} 👋</h1>
-        <p className="mt-1 text-slate-500">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+          Who&apos;s your next opponent?
+        </p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight md:text-4xl">
+          Hi <span className="text-sport">{firstName}</span>
+        </h1>
+        <p className="mt-2 text-slate-500">
           {profile?.team_name ? (
             <span className="font-medium text-court-700">
               {profile.team_name}
@@ -227,7 +233,13 @@ export function HomePage() {
                     </span>
                     <div className="min-w-0">
                       <p className="truncate text-sm">
-                        <span className="font-semibold">{ourSide(r)}</span>{" "}
+                        {!me && (
+                          <>
+                            <span className="font-semibold">
+                              {ourSide(r)}
+                            </span>{" "}
+                          </>
+                        )}
                         <span className="text-slate-400">vs</span>{" "}
                         <span className="font-semibold">
                           {r.opponent?.name ?? "Unknown"}
@@ -235,7 +247,11 @@ export function HomePage() {
                         </span>
                       </p>
                       <p className="text-xs text-slate-400">
-                        {r.format === "doubles" ? "Doubles · " : ""}
+                        {r.format === "doubles"
+                          ? me && partnerOf(r, me.id)
+                            ? `Doubles with ${partnerOf(r, me.id)} · `
+                            : "Doubles · "
+                          : ""}
                         {formatDate(r.played_on)}
                       </p>
                     </div>

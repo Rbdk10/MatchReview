@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Check, Copy, RefreshCw, Share2 } from "lucide-react";
 import { Modal } from "./Modal";
+import { canShare, shareLink as openShareSheet } from "../lib/nativeUi";
 
 interface Props {
   open: boolean;
@@ -43,20 +44,13 @@ export function InviteLinkModal({
     }
   }
 
-  async function shareLink() {
-    try {
-      await navigator.share({
-        title: "Join our team on MatchReview",
-        text: shareText,
-        url,
-      });
-    } catch {
-      /* share sheet dismissed */
-    }
+  function shareLink() {
+    void openShareSheet({
+      title: "Join our team on WhosMyOpponent",
+      text: shareText,
+      url,
+    });
   }
-
-  const canShare =
-    typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   return (
     <Modal open={open} title={title} onClose={onClose}>

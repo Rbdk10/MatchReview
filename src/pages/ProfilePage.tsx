@@ -5,6 +5,7 @@ import { useAuth } from "../lib/auth";
 import { SPORTS, staffRoleLabel, type Player, type Sport } from "../lib/types";
 import { useRosterAdmin } from "../lib/useRosterAdmin";
 import { StaffSection } from "../components/StaffSection";
+import { DeleteAccount } from "../components/DeleteAccount";
 import {
   SchoolPicker,
   schoolFromProfile,
@@ -119,6 +120,7 @@ function PlayerProfile() {
         <button className="btn-ghost text-slate-500" onClick={signOut}>
           Sign out
         </button>
+        <DeleteAccount />
       </div>
     </div>
   );
@@ -349,6 +351,7 @@ function CoachProfile() {
         <button className="btn-ghost text-slate-500" onClick={signOut}>
           Sign out
         </button>
+        <DeleteAccount />
       </div>
 
       {roster.dialogs}

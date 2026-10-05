@@ -13,12 +13,15 @@ import { OnboardingPage } from "./pages/OnboardingPage";
 import { JoinPage } from "./pages/JoinPage";
 import { TeamPage } from "./pages/TeamPage";
 import { AdminEmpty } from "./components/AdminBar";
+import { BrandMark } from "./components/Brand";
+import { useDarkStatusBar } from "./lib/nativeUi";
 
 function Splash() {
   return (
     <div className="grid min-h-full place-items-center text-slate-500">
-      <div className="flex items-center gap-2">
-        <span className="animate-bounce text-2xl">🎾</span> Loading…
+      <div className="flex flex-col items-center gap-3">
+        <BrandMark tile className="breathe size-14 rounded-[22%] shadow-md ring-1 ring-black/10" />
+        <span className="text-sm">Loading…</span>
       </div>
     </div>
   );
@@ -28,6 +31,7 @@ function Splash() {
 function NoTeam() {
   const { session, refreshProfile, signOut } = useAuth();
   const [busy, setBusy] = useState(false);
+  useDarkStatusBar();
   async function startOwnTeam() {
     if (!session) return;
     setBusy(true);
@@ -39,9 +43,9 @@ function NoTeam() {
     setBusy(false);
   }
   return (
-    <div className="grid min-h-full place-items-center bg-court-900 px-6 text-center text-white">
+    <div className="grid min-h-full place-items-center bg-court-900 px-6 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-center text-white">
       <div className="max-w-md">
-        <img src="/logo.png" alt="" className="mx-auto size-14" />
+        <BrandMark tile className="mx-auto size-14 rounded-[22%]" />
         <h1 className="mt-5 text-2xl font-bold">
           You&apos;re not on a team right now
         </h1>
