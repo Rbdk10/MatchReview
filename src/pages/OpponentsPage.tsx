@@ -17,6 +17,7 @@ import {
   formatDate,
   formatSets,
   ourSide,
+  partnerOf,
   type Opponent,
   type Result,
 } from "../lib/types";
@@ -229,8 +230,6 @@ export function OpponentsPage() {
           const wins = opp.results.filter((r) => r.outcome === "win").length;
           const losses = opp.results.length - wins;
           const open = openId === opp.id;
-          const didWell = opp.results.filter((r) => r.did_well);
-          const struggled = opp.results.filter((r) => r.struggled_with);
           const didWellTags = tallyTags(
             opp.results.map((r) => r.did_well_tags),
           );
@@ -293,10 +292,7 @@ export function OpponentsPage() {
                     </Link>
                   </div>
 
-                  {(didWell.length > 0 ||
-                    struggled.length > 0 ||
-                    didWellTags.length > 0 ||
-                    struggledTags.length > 0) && (
+                  {(didWellTags.length > 0 || struggledTags.length > 0) && (
                     <div className="mb-4 grid gap-3 sm:grid-cols-2">
                       <div className="rounded-xl border border-court-200 bg-court-50 p-3">
                         <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-court-800">
@@ -304,21 +300,10 @@ export function OpponentsPage() {
                           well
                         </p>
                         <TagTally tags={didWellTags} tone="good" />
-                        {didWell.length === 0 && didWellTags.length === 0 ? (
+                        {didWellTags.length === 0 && (
                           <p className="text-sm text-court-800/60">
                             Nothing noted yet.
                           </p>
-                        ) : (
-                          <ul className="space-y-1.5 text-sm text-court-950">
-                            {didWell.map((r) => (
-                              <li key={r.id}>
-                                {r.did_well}
-                                <span className="ml-1 text-xs text-court-700/70">
-                                  · {formatDate(r.played_on)}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
                         )}
                       </div>
                       <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
@@ -327,22 +312,10 @@ export function OpponentsPage() {
                           struggles with
                         </p>
                         <TagTally tags={struggledTags} tone="bad" />
-                        {struggled.length === 0 &&
-                        struggledTags.length === 0 ? (
+                        {struggledTags.length === 0 && (
                           <p className="text-sm text-amber-800/60">
                             Nothing noted yet.
                           </p>
-                        ) : (
-                          <ul className="space-y-1.5 text-sm text-amber-950">
-                            {struggled.map((r) => (
-                              <li key={r.id}>
-                                {r.struggled_with}
-                                <span className="ml-1 text-xs text-amber-700/70">
-                                  · {formatDate(r.played_on)}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
                         )}
                       </div>
                     </div>
@@ -371,11 +344,21 @@ export function OpponentsPage() {
                               </span>
                             )}
                             <span className="text-sm">
-                              <span className="font-semibold">
-                                {ourSide(r)}
-                              </span>{" "}
+                              {!me && (
+                                <>
+                                  <span className="font-semibold">
+                                    {ourSide(r)}
+                                  </span>{" "}
+                                </>
+                              )}
                               <span className="text-slate-400">vs</span>{" "}
                               {theirSide(r, names)}
+                              {me && partnerOf(r, me.id) && (
+                                <span className="text-slate-400">
+                                  {" "}
+                                  · with {partnerOf(r, me.id)}
+                                </span>
+                              )}
                             </span>
                           </div>
                           <div className="text-right text-sm">
@@ -387,11 +370,14 @@ export function OpponentsPage() {
                             </span>
                           </div>
                         </div>
-                        {r.notes && (
-                          <p className="mt-2 text-sm text-slate-600">
-                            {r.notes}
-                          </p>
-                        )}
+                        {/* Older results also kept written did-well / struggled notes. */}
+                        {[r.did_well, r.struggled_with, r.notes]
+                          .filter(Boolean)
+                          .map((note, i) => (
+                            <p key={i} className="mt-2 text-sm text-slate-600">
+                              {note}
+                            </p>
+                          ))}
                       </li>
                     ))}
                   </ul>

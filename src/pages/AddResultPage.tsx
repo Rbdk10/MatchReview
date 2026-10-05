@@ -1,9 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Check, Minus, Plus, Trophy, User, Users } from "lucide-react";
+import { Check, Plus, Trophy, User, Users } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
-import { ShotTagPicker } from "../components/ShotTagPicker";
+import { ScoutingCard } from "../components/ShotTagPicker";
 import type {
   MatchFormat,
   Opponent,
@@ -50,8 +50,6 @@ export function AddResultPage() {
   // Adding the third set asks whether it was a full set or a match tiebreak.
   const [askThirdSet, setAskThirdSet] = useState(false);
   const [outcomeOverride, setOutcomeOverride] = useState<Outcome | null>(null);
-  const [didWell, setDidWell] = useState("");
-  const [struggled, setStruggled] = useState("");
   const [didWellTags, setDidWellTags] = useState<string[]>([]);
   const [struggledTags, setStruggledTags] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
@@ -233,8 +231,6 @@ export function AddResultPage() {
         played_on: playedOn,
         outcome,
         sets: completeSets,
-        did_well: didWell.trim() || null,
-        struggled_with: struggled.trim() || null,
         did_well_tags: didWellTags,
         struggled_tags: struggledTags,
         notes: notes.trim() || null,
@@ -256,8 +252,6 @@ export function AddResultPage() {
     setOpp2(null);
     setSets(defaultSets(format));
     setOutcomeOverride(null);
-    setDidWell("");
-    setStruggled("");
     setDidWellTags([]);
     setStruggledTags([]);
     setNotes("");
@@ -442,7 +436,7 @@ export function AddResultPage() {
           <input
             id="date"
             type="date"
-            className="input"
+            className="input block min-w-0 appearance-none"
             value={playedOn}
             onChange={(e) => setPlayedOn(e.target.value)}
             max={today()}
@@ -492,18 +486,6 @@ export function AddResultPage() {
                   />
                 </span>
               ))}
-              {sets.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSets((p) => p.filter((_, idx) => idx !== i))
-                  }
-                  className="btn-ghost px-2 py-1.5 text-slate-400 hover:text-red-600"
-                  aria-label={`Remove set ${i + 1}`}
-                >
-                  <Minus size={16} />
-                </button>
-              )}
             </div>
           ))}
         </div>
@@ -580,56 +562,37 @@ export function AddResultPage() {
         </div>
       </section>
 
-      {/* Notes */}
+      {/* Scouting report */}
       <section
         className="card space-y-4 p-5"
         data-reveal
         style={{ ["--d" as string]: "300ms" }}
       >
-        <h2 className="text-base font-semibold">
-          {doubles ? "Notes on the pair" : "Opponent notes"}
-        </h2>
         <div>
-          <p className="label text-court-800">What {subject} did well</p>
-          <ShotTagPicker
-            value={didWellTags}
-            onChange={setDidWellTags}
-            tone="good"
-            label="Did well tags"
-          />
-          <label className="sr-only" htmlFor="didWell">
-            Notes on what {subject} did well
-          </label>
-          <textarea
-            id="didWell"
-            className="input mt-3 min-h-20"
-            value={didWell}
-            onChange={(e) => setDidWell(e.target.value)}
-            placeholder={"Written notes (optional)"}
-          />
+          <h2 className="text-base font-semibold">Scouting report</h2>
+          <p className="text-sm text-slate-500">
+            Tag the shots {subject} did well and struggled with.
+          </p>
         </div>
-        <div>
-          <p className="label text-amber-800">What {subject} struggled with</p>
-          <ShotTagPicker
-            value={struggledTags}
-            onChange={setStruggledTags}
-            tone="bad"
-            label="Struggled with tags"
+        <div className="grid gap-3 lg:grid-cols-2">
+          <ScoutingCard
+            tone="good"
+            title="Did well"
+            subject={subject}
+            tags={didWellTags}
+            onTagsChange={setDidWellTags}
           />
-          <label className="sr-only" htmlFor="struggled">
-            Notes on what {subject} struggled with
-          </label>
-          <textarea
-            id="struggled"
-            className="input mt-3 min-h-20"
-            value={struggled}
-            onChange={(e) => setStruggled(e.target.value)}
-            placeholder={"Written notes (optional)"}
+          <ScoutingCard
+            tone="bad"
+            title="Struggled with"
+            subject={subject}
+            tags={struggledTags}
+            onTagsChange={setStruggledTags}
           />
         </div>
         <div>
           <label className="label" htmlFor="notes">
-            Other notes{" "}
+            Notes{" "}
             <span className="font-normal text-slate-400">(optional)</span>
           </label>
           <textarea

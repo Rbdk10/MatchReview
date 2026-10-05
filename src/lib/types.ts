@@ -131,3 +131,12 @@ export function teamShortName(name?: string | null): string {
     .join("");
   return acronym.length >= 2 ? acronym : full;
 }
+
+/** In a doubles match, the name of the teammate who played alongside `playerId`. */
+export function partnerOf(
+  r: Pick<Result, "player_id" | "player_name" | "player2_id" | "player2_name">,
+  playerId: string,
+): string | null {
+  if (!r.player2_name) return null;
+  return r.player_id === playerId ? r.player2_name : r.player_name;
+}

@@ -126,3 +126,23 @@ export function tallyTags(
     .map(([tag, count]) => ({ tag, count }))
     .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
 }
+
+/** One-line descriptions shown on the shot tiles. */
+export const SHOT_HINTS: Record<string, string> = {
+  Forehand: "Groundstrokes, volleys, specialty shots",
+  Backhand: "Groundstrokes, volleys, specialty shots",
+  Serve: "First and second serves, placement",
+  Return: "Returning first and second serves",
+  "Net play": "Volleys, overheads, poaching",
+  Movement: "Footwork, court coverage, recovery",
+  Mental: "Composure, patience, decision making",
+};
+
+/** Human phrasing of a stored tag for previews, e.g. "Backhand volley on low balls". */
+export function describeTag(parts: string[]): string {
+  const [shot, type, situation] = parts;
+  if (!shot) return "";
+  let text = type ? `${shot} ${type.toLowerCase()}` : shot;
+  if (situation) text += ` · ${situation.toLowerCase()}`;
+  return text;
+}
