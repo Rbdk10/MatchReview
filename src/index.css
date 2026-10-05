@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-court-50: #eefbf3;
+  --color-court-100: #d6f5e1;
+  --color-court-200: #b0eac8;
+  --color-court-300: #7cd8a6;
+  --color-court-400: #45be7f;
+  --color-court-500: #22a366;
+  --color-court-600: #158352;
+  --color-court-700: #126944;
+  --color-court-800: #125337;
+  --color-court-900: #10442f;
+  --color-court-950: #07261a;
+  --color-ball: #d4e846;
+}
+
+html, body, #root { height: 100%; }
+body { @apply bg-slate-50 text-slate-900 antialiased; }
+
+@utility input {
+  @apply w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-[15px] text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-court-500 focus:ring-4 focus:ring-court-500/15 disabled:bg-slate-100;
+}
+@utility label {
+  @apply mb-1.5 block text-sm font-medium text-slate-700;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50 bg-court-600 text-white shadow-sm hover:bg-court-700;
+}
+@utility btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50 border border-slate-300 bg-white text-slate-800 hover:bg-slate-50;
+}
+@utility btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50 text-slate-700 hover:bg-slate-100;
+}
+@utility btn-danger {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50 bg-red-600 text-white hover:bg-red-700;
+}
+@utility card {
+  @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+}
+
+/* ---------- Motion system ---------- */
+@keyframes mr-aurora {
+  0%   { transform: translate3d(-10%, -8%, 0) scale(1) rotate(0deg); }
+  33%  { transform: translate3d(12%, 6%, 0) scale(1.15) rotate(25deg); }
+  66%  { transform: translate3d(-4%, 14%, 0) scale(0.95) rotate(-15deg); }
+  100% { transform: translate3d(-10%, -8%, 0) scale(1) rotate(0deg); }
+}
+@keyframes mr-aurora-2 {
+  0%   { transform: translate3d(8%, 10%, 0) scale(1.1); }
+  50%  { transform: translate3d(-14%, -6%, 0) scale(0.9); }
+  100% { transform: translate3d(8%, 10%, 0) scale(1.1); }
+}
+@keyframes mr-orbit {
+  from { transform: rotate(0deg) translateX(var(--orbit, 140px)) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(var(--orbit, 140px)) rotate(-360deg); }
+}
+@keyframes mr-float {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-6deg); }
+  50%      { transform: translate3d(0, -14px, 0) rotate(6deg); }
+}
+@keyframes mr-rise {
+  from { opacity: 0; transform: translate3d(0, 18px, 0) scale(0.985); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes mr-word {
+  from { opacity: 0; transform: translate3d(0, 110%, 0) rotate(3deg); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) rotate(0deg); }
+}
+@keyframes mr-ring {
+  0%   { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+@keyframes mr-sheen {
+  0%   { transform: translateX(-120%) skewX(-18deg); }
+  60%, 100% { transform: translateX(220%) skewX(-18deg); }
+}
+@keyframes mr-bounce-in {
+  0%   { transform: scale(0.3) translateY(-40px); opacity: 0; }
+  55%  { transform: scale(1.12) translateY(6px); opacity: 1; }
+  75%  { transform: scale(0.96) translateY(-3px); }
+  100% { transform: scale(1) translateY(0); }
+}
+@keyframes mr-expand {
+  from { opacity: 0; transform: translate3d(0, -8px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes mr-hue {
+  0%, 100% { filter: hue-rotate(0deg) saturate(1); }
+  50%      { filter: hue-rotate(-14deg) saturate(1.15); }
+}
+
+/* Aurora blobs (absolutely positioned inside a relative, overflow-hidden parent) */
+.aurora { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.aurora::before, .aurora::after {
+  content: ""; position: absolute; border-radius: 9999px; filter: blur(70px); will-change: transform;
+}
+.aurora::before {
+  width: 60vmax; height: 60vmax; top: -20vmax; left: -15vmax;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--color-ball) 55%, transparent), transparent 70%);
+  animation: mr-aurora 22s ease-in-out infinite;
+}
+.aurora::after {
+  width: 50vmax; height: 50vmax; bottom: -20vmax; right: -10vmax;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--color-court-400) 65%, transparent), transparent 70%);
+  animation: mr-aurora-2 28s ease-in-out infinite;
+}
+.aurora-sm::before { width: 34rem; height: 34rem; top: -14rem; left: -10rem; filter: blur(50px); }
+.aurora-sm::after  { width: 28rem; height: 28rem; bottom: -14rem; right: -8rem; filter: blur(50px); }
+
+/* Orbiting / floating tennis ball */
+.orbit { position: absolute; animation: mr-orbit var(--speed, 26s) linear infinite; will-change: transform; }
+.float { animation: mr-float 6s ease-in-out infinite; will-change: transform; }
+.ball {
+  display: inline-grid; place-items: center; border-radius: 9999px;
+  background: radial-gradient(circle at 32% 30%, #f3ff9a, var(--color-ball) 55%, #a9bd1d 100%);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.15), 0 18px 40px -10px rgba(212,232,70,.55), inset -6px -8px 14px rgba(0,0,0,.18);
+}
+.ball::after {
+  content: ""; width: 68%; height: 68%; border-radius: 9999px; border: 2px solid rgba(255,255,255,.7);
+  border-left-color: transparent; border-right-color: transparent; transform: rotate(-30deg);
+}
+
+/* Scroll reveal: elements start hidden, .in class (set by observer) plays them */
+[data-reveal] {
+  opacity: 0; transform: translate3d(0, 18px, 0) scale(0.985);
+  transition: opacity .7s cubic-bezier(.2,.8,.2,1), transform .7s cubic-bezier(.2,.8,.2,1);
+  transition-delay: var(--d, 0ms);
+}
+[data-reveal].in { opacity: 1; transform: none; }
+
+/* Word-by-word headline reveal */
+.words > span { display: inline-block; overflow: hidden; vertical-align: bottom; }
+.words > span > span { display: inline-block; animation: mr-word .8s cubic-bezier(.2,.8,.2,1) both; animation-delay: var(--d, 0ms); }
+
+/* Springy hover lift + glow */
+.lift { transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease, border-color .35s ease; will-change: transform; }
+.lift:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 18px 40px -18px rgba(18,83,55,.45); }
+.lift:active { transform: translateY(0) scale(.995); }
+
+/* Pulsing ring behind the primary Add buttons */
+.pulse-ring { position: relative; isolation: isolate; }
+.pulse-ring::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1;
+  background: var(--color-ball); animation: mr-ring 2.4s cubic-bezier(.2,.8,.2,1) infinite;
+}
+
+/* Moving sheen across a card */
+.sheen { position: relative; overflow: hidden; }
+.sheen::after {
+  content: ""; position: absolute; top: -20%; bottom: -20%; width: 35%; left: 0; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+  animation: mr-sheen 5.5s ease-in-out infinite; animation-delay: 1.2s;
+}
+
+/* Animated gradient border-glow for the hero */
+.hero-glow { position: relative; }
+.hero-glow::before {
+  content: ""; position: absolute; inset: -2px; border-radius: inherit; z-index: -1;
+  background: conic-gradient(from var(--a, 0deg), var(--color-ball), var(--color-court-400), var(--color-court-700), var(--color-ball));
+  filter: blur(14px); opacity: .55; animation: mr-spin 8s linear infinite;
+}
+@property --a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes mr-spin { to { --a: 360deg; } }
+
+/* Nav link animated underline */
+.nav-underline { position: relative; }
+.nav-underline::after {
+  content: ""; position: absolute; left: .75rem; right: .75rem; bottom: .35rem; height: 2px; border-radius: 2px;
+  background: var(--color-ball); transform: scaleX(0); transform-origin: left; transition: transform .35s cubic-bezier(.2,.8,.2,1);
+}
+.nav-underline:hover::after { transform: scaleX(1); }
+
+.bounce-in { animation: mr-bounce-in .8s cubic-bezier(.2,.8,.2,1) both; }
+.expand-in { animation: mr-expand .35s cubic-bezier(.2,.8,.2,1) both; }
+.hue-drift { animation: mr-hue 12s ease-in-out infinite; }
+
+/* Smooth everything that changes colour */
+a, button { transition: background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease, transform .25s cubic-bezier(.2,.8,.2,1); }
+button:active, a:active { transform: scale(.985); }
+
+/* Calm fallback */
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before, .aurora::after, .orbit, .float, .pulse-ring::before, .sheen::after, .hero-glow::before, .hue-drift { animation: none !important; }
+  [data-reveal] { opacity: 1; transform: none; }
+  [data-reveal] { transition: none; }
+  .words > span > span, .bounce-in, .expand-in { animation: none !important; opacity: 1; transform: none; }
+  .lift:hover { transform: none; }
+  a, button { transition: none; }
+}
+
+/* ---------- Onboarding slides ---------- */
+@keyframes mr-slide-right { from { opacity: 0; transform: translate3d(48px, 0, 0); } to { opacity: 1; transform: none; } }
+@keyframes mr-slide-left  { from { opacity: 0; transform: translate3d(-48px, 0, 0); } to { opacity: 1; transform: none; } }
+.slide-in-right { animation: mr-slide-right .5s cubic-bezier(.2,.8,.2,1) both; }
+.slide-in-left  { animation: mr-slide-left .5s cubic-bezier(.2,.8,.2,1) both; }
+@utility input-dark {
+  @apply w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-lg text-white shadow-sm outline-none placeholder:text-white/40 focus:border-ball focus:ring-4 focus:ring-ball/20;
+}
+@media (prefers-reduced-motion: reduce) {
+  .slide-in-right, .slide-in-left { animation: none; }
+}
