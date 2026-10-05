@@ -22,7 +22,10 @@ function today(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-const emptySet = (): SetScore => ({ us: null, them: null });
+/** A set as typed. A match tiebreak (to 10) is the only score with two digits. */
+type SetRow = SetScore & { tiebreak?: boolean };
+const emptySet = (tiebreak = false): SetRow =>
+  tiebreak ? { us: null, them: null, tiebreak } : { us: null, them: null };
 const defaultSets = (format: MatchFormat) =>
   format === "doubles" ? [emptySet()] : [emptySet(), emptySet()];
 
@@ -43,7 +46,9 @@ export function AddResultPage() {
   const [playerId, setPlayerId] = useState("");
   const [player2Id, setPlayer2Id] = useState("");
   const [playedOn, setPlayedOn] = useState(today());
-  const [sets, setSets] = useState<SetScore[]>(defaultSets("singles"));
+  const [sets, setSets] = useState<SetRow[]>(defaultSets("singles"));
+  // Adding the third set asks whether it was a full set or a match tiebreak.
+  const [askThirdSet, setAskThirdSet] = useState(false);
   const [outcomeOverride, setOutcomeOverride] = useState<Outcome | null>(null);
   const [didWell, setDidWell] = useState("");
   const [struggled, setStruggled] = useState("");
@@ -134,11 +139,34 @@ export function AddResultPage() {
         ? "the pair"
         : "the opponent";
 
-  function updateSet(i: number, key: keyof SetScore, raw: string) {
-    const v =
-      raw === "" ? null : Math.max(0, Math.min(99, parseInt(raw, 10) || 0));
+  function updateSet(i: number, key: "us" | "them", raw: string) {
+    const tiebreak = !!sets[i]?.tiebreak;
+    const digits = raw.replace(/\D/g, "");
+    // A normal set is one digit: keep the latest one typed. A tiebreak allows two.
+    const kept = tiebreak ? digits.slice(0, 2) : digits.slice(-1);
+    const v = kept === "" ? null : parseInt(kept, 10);
     setSets((prev) =>
       prev.map((s, idx) => (idx === i ? { ...s, [key]: v } : s)),
+    );
+    // Jump on once the box is full: your side → their side → next set.
+    if (kept.length === (tiebreak ? 2 : 1)) {
+      const next =
+        key === "us"
+          ? `set-${i}-them`
+          : i + 1 < sets.length
+            ? `set-${i + 1}-us`
+            : null;
+      if (next)
+        requestAnimationFrame(() => document.getElementById(next)?.focus());
+    }
+  }
+
+  function addSet(tiebreak = false) {
+    const i = sets.length;
+    setSets((p) => [...p, emptySet(tiebreak)]);
+    setAskThirdSet(false);
+    requestAnimationFrame(() =>
+      document.getElementById(`set-${i}-us`)?.focus(),
     );
   }
 
@@ -437,32 +465,33 @@ export function AddResultPage() {
         <div className="space-y-2">
           {sets.map((s, i) => (
             <div key={i} className="flex items-center gap-2">
-              <span className="w-12 shrink-0 text-sm font-medium text-slate-500">
+              <span className="w-12 shrink-0 text-sm font-medium leading-tight text-slate-500">
                 Set {i + 1}
+                {s.tiebreak && (
+                  <span className="block text-[11px] font-normal text-slate-400">
+                    tiebreak
+                  </span>
+                )}
               </span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={99}
-                className="input w-20 text-center text-lg font-semibold"
-                value={s.us ?? ""}
-                onChange={(e) => updateSet(i, "us", e.target.value)}
-                aria-label={`Set ${i + 1}, your side`}
-                placeholder="–"
-              />
-              <span className="text-slate-400">–</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={99}
-                className="input w-20 text-center text-lg font-semibold"
-                value={s.them ?? ""}
-                onChange={(e) => updateSet(i, "them", e.target.value)}
-                aria-label={`Set ${i + 1}, opponent`}
-                placeholder="–"
-              />
+              {(["us", "them"] as const).map((side, k) => (
+                <span key={side} className="contents">
+                  {k === 1 && <span className="text-slate-400">–</span>}
+                  <input
+                    id={`set-${i}-${side}`}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="off"
+                    maxLength={s.tiebreak ? 2 : undefined}
+                    className="input w-20 text-center text-lg font-semibold"
+                    value={s[side] ?? ""}
+                    onChange={(e) => updateSet(i, side, e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    aria-label={`Set ${i + 1}${s.tiebreak ? " tiebreak" : ""}, ${side === "us" ? "your side" : "opponent"}`}
+                    placeholder="–"
+                  />
+                </span>
+              ))}
               {sets.length > 1 && (
                 <button
                   type="button"
@@ -478,14 +507,47 @@ export function AddResultPage() {
             </div>
           ))}
         </div>
-        {sets.length < 5 && (
-          <button
-            type="button"
-            onClick={() => setSets((p) => [...p, emptySet()])}
-            className="btn-ghost mt-2 px-2 text-court-700"
-          >
-            <Plus size={16} /> Add set
-          </button>
+        {askThirdSet ? (
+          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-sm font-medium text-slate-700">
+              Was the third set a full set or a match tiebreak?
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => addSet(false)}
+                className="btn-secondary px-3 py-1.5"
+              >
+                Full set
+              </button>
+              <button
+                type="button"
+                onClick={() => addSet(true)}
+                className="btn-secondary px-3 py-1.5"
+              >
+                Match tiebreak
+              </button>
+              <button
+                type="button"
+                onClick={() => setAskThirdSet(false)}
+                className="btn-ghost px-3 py-1.5 text-slate-500"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          sets.length < 5 && (
+            <button
+              type="button"
+              onClick={() =>
+                sets.length === 2 ? setAskThirdSet(true) : addSet()
+              }
+              className="btn-ghost mt-2 px-2 text-court-700"
+            >
+              <Plus size={16} /> Add set
+            </button>
+          )
         )}
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
