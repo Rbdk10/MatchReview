@@ -7,7 +7,7 @@ export const isIOS = Capacitor.getPlatform() === "ios";
 /** The public website. Links people share must point here, never at the app's own origin. */
 export const WEB_ORIGIN =
   (import.meta.env.VITE_PUBLIC_URL as string | undefined) ??
-  "https://matchreview.netlify.app";
+  "https://whosmyopponent.netlify.app";
 
 /** Origin for links that leave the device (invite links, OAuth returns on the web). */
 export function publicOrigin(): string {
@@ -15,4 +15,4 @@ export function publicOrigin(): string {
 }
 
 /** Custom URL scheme registered in ios/App/App/Info.plist. */
-export const APP_SCHEME = "matchreview";
+export const APP_SCHEME = "whosmyopponent";

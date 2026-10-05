@@ -123,9 +123,20 @@ export function teamShortName(name?: string | null): string {
   const full = name?.trim();
   if (!full) return "My team";
   if (full.length <= 14) return full;
+  return schoolAcronym(full);
+}
+
+/**
+ * A school's acronym: "University of Delaware" → "UD", "University of San Diego" → "USD",
+ * "Montana State University - Bozeman" → "MSU". One-word names ("Harvard", "MSU") stay as they are.
+ */
+export function schoolAcronym(name: string): string {
+  const full = name.trim();
   const base = full.split(/\s+-\s+|\s*\(/)[0];
-  const stop = new Set(["of", "the", "and", "at", "for", "in", "&", "a", "an"]);
-  const acronym = (base.match(/[A-Za-z][A-Za-z'.]*/g) ?? [])
+  const stop = new Set(["of", "the", "and", "at", "for", "in"]);
+  const words = base.match(/[A-Za-z][A-Za-z'.]*/g) ?? [];
+  if (words.length < 2) return full;
+  const acronym = words
     .filter((w) => !stop.has(w.toLowerCase()))
     .map((w) => w[0].toUpperCase())
     .join("");

@@ -12,6 +12,7 @@ import {
   RosterStatus,
 } from "../components/RosterRowActions";
 import {
+  schoolAcronym,
   formatDate,
   teamShortName,
   formatSets,
@@ -331,8 +332,9 @@ export function TeamPage() {
               <span
                 key={name}
                 className="rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm shadow-sm"
+                title={name}
               >
-                <span className="font-medium">{name}</span>{" "}
+                <span className="font-medium">{schoolAcronym(name)}</span>{" "}
                 <span className="font-semibold text-court-700">{rec.w}W</span>
                 <span className="text-slate-300"> · </span>
                 <span className="font-semibold text-red-600">{rec.l}L</span>

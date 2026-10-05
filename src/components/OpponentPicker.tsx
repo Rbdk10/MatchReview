@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, School as SchoolIcon, UserPlus, X } from "lucide-react";
-import { formatPersonName, type Opponent } from "../lib/types";
+import { formatPersonName, schoolAcronym, type Opponent } from "../lib/types";
 import { SchoolPicker, type School } from "./SchoolPicker";
 
 export type OpponentChoice =
@@ -96,8 +96,13 @@ export function OpponentPicker({
               )}
             </p>
             {value.kind === "existing" ? (
-              <p className="text-sm text-court-800/80">
-                {value.opponent.school || "No school recorded"}
+              <p
+                className="text-sm text-court-800/80"
+                title={value.opponent.school ?? undefined}
+              >
+                {value.opponent.school
+                  ? schoolAcronym(value.opponent.school)
+                  : "No school recorded"}
               </p>
             ) : (
               <div className="mt-2">
@@ -163,7 +168,9 @@ export function OpponentPicker({
                 >
                   <span className="font-medium">{o.name}</span>
                   {o.school && (
-                    <span className="text-xs text-slate-500">{o.school}</span>
+                    <span className="text-xs text-slate-500" title={o.school}>
+                      {schoolAcronym(o.school)}
+                    </span>
                   )}
                 </button>
               ))}

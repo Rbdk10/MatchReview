@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { SHOTS, SHOT_HINTS, TAG_SEP, joinTag } from "../lib/shotTags";
+import { lockScroll } from "../lib/scrollLock";
 
 type Tone = "good" | "bad";
 
@@ -189,6 +190,10 @@ function ScoutingSheet({
   const t = TONES[tone];
   const step = parts.length;
   const shot = SHOTS.find((s) => s.shot === parts[0]);
+  const stepTitle =
+    step === 2 && shot?.situationTitle
+      ? shot.situationTitle
+      : STEP_TITLES[step];
   const options =
     step === 0
       ? SHOTS.map((s) => s.shot)
@@ -197,8 +202,7 @@ function ScoutingSheet({
         : (shot?.situations ?? []);
 
   useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlockScroll = lockScroll();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.stopImmediatePropagation();
@@ -208,7 +212,7 @@ function ScoutingSheet({
     window.addEventListener("keydown", onKey, true);
     return () => {
       window.removeEventListener("keydown", onKey, true);
-      document.body.style.overflow = prev;
+      unlockScroll();
     };
   }, [onClose]);
 
@@ -233,7 +237,7 @@ function ScoutingSheet({
       className="fixed inset-0 z-[60] flex sm:items-center sm:justify-center sm:p-4"
       role="dialog"
       aria-modal="true"
-      aria-label={STEP_TITLES[step]}
+      aria-label={stepTitle}
     >
       <div
         className="absolute inset-0 hidden bg-slate-900/50 backdrop-blur-[2px] sm:block"
@@ -298,9 +302,7 @@ function ScoutingSheet({
             key={step}
             className={dir === 1 ? "slide-in-right" : "slide-in-left"}
           >
-            <h2 className="text-xl font-bold text-slate-900">
-              {STEP_TITLES[step]}
-            </h2>
+            <h2 className="text-xl font-bold text-slate-900">{stepTitle}</h2>
             <p className="mt-0.5 text-sm text-slate-500">
               {step === 0
                 ? "Tap one to start."

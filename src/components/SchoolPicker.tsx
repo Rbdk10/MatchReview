@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, School as SchoolIcon, Search, X } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { lockScroll } from "../lib/scrollLock";
 
 export interface School {
   id: number;
@@ -100,8 +101,7 @@ function SchoolSearchModal({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const unlockScroll = lockScroll();
     inputRef.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -113,7 +113,7 @@ function SchoolSearchModal({
     window.addEventListener("keydown", onKey, true);
     return () => {
       window.removeEventListener("keydown", onKey, true);
-      document.body.style.overflow = prevOverflow;
+      unlockScroll();
     };
   }, [onClose]);
 

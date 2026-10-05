@@ -1,4 +1,4 @@
-# MatchReview
+# WhosMyOpponent
 
 Opponent tracker for coaches. Log match results, capture what each opponent did well and where they struggled, and have the scouting notes ready before the next match. Tennis only for now; the schema is set up to add more sports later.
 
@@ -16,7 +16,7 @@ The app runs at http://localhost:5173.
 
 ## Deploy
 
-Live at https://matchreview.netlify.app (Netlify site `matchreview` on the rbdk10 team, account reubendeklerk071@gmail.com). Deploy a new build with:
+Live at https://whosmyopponent.netlify.app (Netlify site `whosmyopponent` on the rbdk10 team, account reubendeklerk071@gmail.com). Deploy a new build with:
 
 ```bash
 npm run build && netlify deploy --prod --dir=dist

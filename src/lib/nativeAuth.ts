@@ -7,7 +7,7 @@ import { APP_SCHEME, isNative } from "./platform";
  * Sign-in that works both on the web and inside the app.
  *
  * Google refuses OAuth inside embedded web views, so the app opens the Google page in the system
- * browser sheet and Supabase sends the user back through `matchreview://auth-callback?code=…`.
+ * browser sheet and Supabase sends the user back through `whosmyopponent://auth-callback?code=…`.
  * The deep link is caught in NativeShell and finished with `completeNativeSignIn`.
  */
 

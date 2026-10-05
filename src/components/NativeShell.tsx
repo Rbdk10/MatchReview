@@ -15,7 +15,7 @@ function pathFromLink(url: string): string | null {
     const u = new URL(url);
     return `${u.pathname}${u.search}` || "/";
   }
-  // matchreview://join/<token> → /join/<token>
+  // whosmyopponent://join/<token> → /join/<token>
   const prefix = `${APP_SCHEME}://`;
   if (url.startsWith(prefix)) return `/${url.slice(prefix.length)}`;
   return null;
@@ -35,7 +35,7 @@ export function NativeShell() {
     void StatusBar.setStyle({ style: Style.Light }).catch(() => {});
 
     const subs = [
-      // Deep links: the Google sign-in callback, invite links, and matchreview:// links.
+      // Deep links: the Google sign-in callback, invite links, and whosmyopponent:// links.
       CapApp.addListener("appUrlOpen", async ({ url }) => {
         const afterSignIn = await completeNativeSignIn(url);
         const path = afterSignIn ?? pathFromLink(url);

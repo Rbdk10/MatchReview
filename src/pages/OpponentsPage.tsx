@@ -14,6 +14,7 @@ import { Modal } from "../components/Modal";
 import { tallyTags } from "../lib/shotTags";
 import { SchoolPicker, type School } from "../components/SchoolPicker";
 import {
+  schoolAcronym,
   formatDate,
   formatSets,
   ourSide,
@@ -253,8 +254,13 @@ export function OpponentsPage() {
               >
                 <div className="min-w-0">
                   <p className="truncate text-base font-semibold">{opp.name}</p>
-                  <p className="truncate text-sm text-slate-500">
-                    {opp.school || "No school recorded"}
+                  <p
+                    className="truncate text-sm text-slate-500"
+                    title={opp.school ?? undefined}
+                  >
+                    {opp.school
+                      ? schoolAcronym(opp.school)
+                      : "No school recorded"}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">

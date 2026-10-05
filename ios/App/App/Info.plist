@@ -29,8 +29,8 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<!-- Google sign-in returns here: matchreview://auth-callback -->
-				<string>matchreview</string>
+				<!-- Google sign-in returns here: whosmyopponent://auth-callback -->
+				<string>whosmyopponent</string>
 			</array>
 		</dict>
 	</array>

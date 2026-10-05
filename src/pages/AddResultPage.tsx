@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { flushSync } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Check, Plus, Trophy, User, Users } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -29,6 +30,22 @@ const emptySet = (tiebreak = false): SetRow =>
   tiebreak ? { us: null, them: null, tiebreak } : { us: null, them: null };
 const defaultSets = (format: MatchFormat) =>
   format === "doubles" ? [emptySet()] : [emptySet(), emptySet()];
+
+/** Whether a typed set has a winner. A match tiebreak ends at 10 (or win by two past it). */
+function setDecided({ us, them, tiebreak }: SetRow): boolean {
+  if (us === null || them === null || us === them) return false;
+  if (!tiebreak) return true;
+  const hi = Math.max(us, them);
+  const lo = Math.min(us, them);
+  return hi === 10 ? lo <= 8 : hi > 10 && lo === hi - 2;
+}
+
+/** Every set has a winner and one side won more of them. */
+function matchDecided(sets: SetRow[]): boolean {
+  if (!sets.every(setDecided)) return false;
+  const won = sets.filter((s) => s.us! > s.them!).length;
+  return won * 2 !== sets.length;
+}
 
 export function AddResultPage() {
   const { ownerId, isPlayer, canManageTeam, player: me } = useAuth();
@@ -144,9 +161,24 @@ export function AddResultPage() {
     // A normal set is one digit: keep the latest one typed. A tiebreak allows two.
     const kept = tiebreak ? digits.slice(0, 2) : digits.slice(-1);
     const v = kept === "" ? null : parseInt(kept, 10);
-    setSets((prev) =>
-      prev.map((s, idx) => (idx === i ? { ...s, [key]: v } : s)),
-    );
+    const nextSets = sets.map((s, idx) => (idx === i ? { ...s, [key]: v } : s));
+    setSets(nextSets);
+    // The last box just settled the match: close the keyboard and move on to the scouting report.
+    if (
+      i === sets.length - 1 &&
+      !matchDecided(sets) &&
+      matchDecided(nextSets)
+    ) {
+      (document.activeElement as HTMLElement | null)?.blur();
+      setTimeout(
+        () =>
+          document
+            .getElementById("scouting")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+        250,
+      );
+      return;
+    }
     // Jump on once the box is full: your side → their side → next set.
     if (kept.length === (tiebreak ? 2 : 1)) {
       const next =
@@ -162,11 +194,13 @@ export function AddResultPage() {
 
   function addSet(tiebreak = false) {
     const i = sets.length;
-    setSets((p) => [...p, emptySet(tiebreak)]);
-    setAskThirdSet(false);
-    requestAnimationFrame(() =>
-      document.getElementById(`set-${i}-us`)?.focus(),
-    );
+    // Render the new set now so its first box can be focused inside the tap;
+    // phones only open the keyboard for a focus that happens during the tap itself.
+    flushSync(() => {
+      setSets((p) => [...p, emptySet(tiebreak)]);
+      setAskThirdSet(false);
+    });
+    document.getElementById(`set-${i}-us`)?.focus();
   }
 
   async function resolveOpponent(choice: OpponentChoice): Promise<Opponent> {
@@ -565,7 +599,8 @@ export function AddResultPage() {
 
       {/* Scouting report */}
       <section
-        className="card space-y-4 p-5"
+        id="scouting"
+        className="card scroll-mt-20 space-y-4 p-5 md:scroll-mt-4"
         data-reveal
         style={{ ["--d" as string]: "300ms" }}
       >
@@ -593,8 +628,7 @@ export function AddResultPage() {
         </div>
         <div>
           <label className="label" htmlFor="notes">
-            Notes{" "}
-            <span className="font-normal text-slate-400">(optional)</span>
+            Notes <span className="font-normal text-slate-400">(optional)</span>
           </label>
           <textarea
             id="notes"

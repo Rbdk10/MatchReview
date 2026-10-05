@@ -28,88 +28,112 @@ const STROKE_SITUATIONS = [
   "Under pressure",
 ];
 
-export const SHOTS: { shot: string; types: string[]; situations: string[] }[] =
-  [
-    {
-      shot: "Forehand",
-      types: GROUNDSTROKE_TYPES,
-      situations: STROKE_SITUATIONS,
-    },
-    {
-      shot: "Backhand",
-      types: GROUNDSTROKE_TYPES,
-      situations: STROKE_SITUATIONS,
-    },
-    {
-      shot: "Serve",
-      types: ["First serve", "Second serve", "Flat", "Kick", "Slice"],
-      situations: [
-        "Deuce side",
-        "Ad side",
-        "Out wide",
-        "Body",
-        "Down the T",
-        "Big points",
-      ],
-    },
-    {
-      shot: "Return",
-      types: [
-        "Vs first serve",
-        "Vs second serve",
-        "Chip / block",
-        "Aggressive",
-      ],
-      situations: [
-        "Deuce side",
-        "Ad side",
-        "Wide serve",
-        "Body serve",
-        "Kick serve",
-        "Big points",
-      ],
-    },
-    {
-      shot: "Net play",
-      types: ["Volley", "Half-volley", "Overhead", "Poaching", "Positioning"],
-      situations: [
-        "High ball",
-        "Low ball",
-        "Wide ball",
-        "Lob over them",
-        "Passing shot",
-        "At the body",
-      ],
-    },
-    {
-      shot: "Movement",
-      types: ["Lateral", "Forward", "Backward", "Recovery", "Footwork"],
-      situations: [
-        "Wide ball",
-        "Short ball",
-        "Deep ball",
-        "Long rallies",
-        "Change of pace",
-      ],
-    },
-    {
-      shot: "Mental",
-      types: [
-        "Consistency",
-        "Patience",
-        "Composure",
-        "Focus",
-        "Shot selection",
-      ],
-      situations: [
-        "Big points",
-        "Long rallies",
-        "When behind",
-        "When ahead",
-        "Tiebreaks",
-      ],
-    },
-  ];
+export const SHOTS: {
+  shot: string;
+  types: string[];
+  situations: string[];
+  /** Title for the last step when "In what situation?" doesn't fit. */
+  situationTitle?: string;
+}[] = [
+  {
+    shot: "Groundstrokes",
+    types: [
+      "Rallying",
+      "Consistency",
+      "Depth",
+      "Pace",
+      "Spin",
+      "Attacking",
+      "Defending",
+      "Changing direction",
+      "Angles",
+    ],
+    situations: [
+      "From a fast ball",
+      "From a slow ball",
+      "From heavy topspin",
+      "From low slice",
+      "From a high bounce",
+      "From a deep ball",
+      "From a short ball",
+      "From a wide ball",
+      "On the run",
+      "Under pressure",
+    ],
+  },
+  {
+    shot: "Forehand",
+    types: GROUNDSTROKE_TYPES,
+    situations: STROKE_SITUATIONS,
+  },
+  {
+    shot: "Backhand",
+    types: GROUNDSTROKE_TYPES,
+    situations: STROKE_SITUATIONS,
+  },
+  {
+    shot: "Serve",
+    types: [
+      "First serve",
+      "Second serve",
+      "Flat",
+      "Kick",
+      "Slice",
+      "Out wide",
+      "Body",
+      "Down the T",
+      "Big points",
+    ],
+    situations: ["Deuce side", "Ad side", "General"],
+    situationTitle: "Which side?",
+  },
+  {
+    shot: "Return",
+    types: ["Vs first serve", "Vs second serve", "Chip / block", "Aggressive"],
+    situations: [
+      "Deuce side",
+      "Ad side",
+      "Wide serve",
+      "Body serve",
+      "Kick serve",
+      "Big points",
+    ],
+  },
+  {
+    shot: "Net play",
+    types: ["Volley", "Half-volley", "Overhead", "Poaching", "Positioning"],
+    situations: [
+      "High ball",
+      "Low ball",
+      "Wide ball",
+      "Lob over them",
+      "Passing shot",
+      "At the body",
+    ],
+  },
+  {
+    shot: "Movement",
+    types: ["Lateral", "Forward", "Backward", "Recovery", "Footwork"],
+    situations: [
+      "Wide ball",
+      "Short ball",
+      "Deep ball",
+      "Long rallies",
+      "Change of pace",
+    ],
+  },
+  {
+    shot: "Mental",
+    types: ["Consistency", "Patience", "Composure", "Focus", "Shot selection"],
+    situations: [
+      "Big points",
+      "Long rallies",
+      "When behind",
+      "When ahead",
+      "Tiebreaks",
+    ],
+  },
+];
 
 export function joinTag(parts: string[]): string {
   return parts.filter(Boolean).join(TAG_SEP);
@@ -129,6 +153,7 @@ export function tallyTags(
 
 /** One-line descriptions shown on the shot tiles. */
 export const SHOT_HINTS: Record<string, string> = {
+  Groundstrokes: "Baseline rallies on both wings",
   Forehand: "Groundstrokes, volleys, specialty shots",
   Backhand: "Groundstrokes, volleys, specialty shots",
   Serve: "First and second serves, placement",
