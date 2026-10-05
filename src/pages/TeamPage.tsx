@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ClipboardPlus, School, Settings, UserPlus } from "lucide-react";
+import {
+  ClipboardPlus,
+  School,
+  Settings,
+  UserPlus,
+  ChevronRight,
+} from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { CountUp } from "../components/CountUp";
@@ -34,7 +40,8 @@ function initials(name: string) {
 
 export function TeamPage() {
   const { profile, isPlayer, canManageTeam, player: me, ownerId } = useAuth();
-  const mine = me ? `player_id.eq.${me.id},player2_id.eq.${me.id}` : null;
+  const involvesMe = (r: Result) =>
+    !!me && (r.player_id === me.id || r.player2_id === me.id);
   const [players, setPlayers] = useState<Player[]>([]);
   const [results, setResults] = useState<Result[]>([]);
   const [opponents, setOpponents] = useState<Map<string, Opponent>>(new Map());
@@ -50,11 +57,12 @@ export function TeamPage() {
           .select("*")
           .eq("coach_id", ownerId!)
           .order("name"),
+        // Players read the whole team's matches through a view that leaves out
+        // everyone's scouting notes; coaches read the full results.
         supabase
-          .from("results")
+          .from(isPlayer ? "team_match_results" : "results")
           .select("*")
           .eq("coach_id", ownerId!)
-          .or(mine ?? "id.not.is.null")
           .order("played_on", { ascending: false })
           .order("created_at", { ascending: false }),
         supabase.from("opponents").select("*").eq("coach_id", ownerId!),
@@ -70,10 +78,12 @@ export function TeamPage() {
   }, []);
 
   const teamName = profile?.team_name?.trim() || "Your team";
-  const wins = results.filter((r) => r.outcome === "win").length;
-  const losses = results.length - wins;
-  const winRate = results.length
-    ? Math.round((wins / results.length) * 100)
+  // The stat tiles show a player their own record; coaches see the team's.
+  const statResults = isPlayer ? results.filter(involvesMe) : results;
+  const wins = statResults.filter((r) => r.outcome === "win").length;
+  const losses = statResults.length - wins;
+  const winRate = statResults.length
+    ? Math.round((wins / statResults.length) * 100)
     : null;
 
   // Record per player (singles and doubles both count for everyone on court).
@@ -166,7 +176,7 @@ export function TeamPage() {
       >
         <Stat
           label={isPlayer ? "Your matches" : "Matches"}
-          value={loading ? "–" : <CountUp value={results.length} />}
+          value={loading ? "–" : <CountUp value={statResults.length} />}
         />
         <Stat
           label="Wins"
@@ -204,7 +214,7 @@ export function TeamPage() {
           </div>
           {isPlayer && (
             <span className="text-xs text-slate-400">
-              Records show for your own matches
+              Teammates&apos; notes stay private
             </span>
           )}
         </div>
@@ -253,24 +263,31 @@ export function TeamPage() {
             {players.map((p) => {
               const rec = records.get(p.id);
               const isMe = me?.id === p.id;
-              const showRecord = !isPlayer || isMe;
+              const showRecord = true;
               const status = roster.statusOf(p);
               return (
                 <li
                   key={p.id}
-                  className={`card flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-4 ${isMe ? "border-court-300" : ""}`}
+                  className={`card lift relative flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-4 transition hover:border-court-300 ${isMe ? "border-court-300" : ""}`}
                 >
+                  <Link
+                    to={`/team/${p.id}`}
+                    className="absolute inset-0 rounded-[inherit]"
+                    aria-label={`View ${p.name}'s results`}
+                  />
                   <div className="flex min-w-0 items-center gap-3">
                     {!canManageTeam ? (
                       <span className="grid size-10 shrink-0 place-items-center rounded-full bg-court-100 text-sm font-bold text-court-800">
                         {initials(p.name)}
                       </span>
                     ) : (
-                      <RosterLead
-                        player={p}
-                        status={status}
-                        onInvite={roster.openInvite}
-                      />
+                      <span className="relative z-10">
+                        <RosterLead
+                          player={p}
+                          status={status}
+                          onInvite={roster.openInvite}
+                        />
+                      </span>
                     )}
                     <div className="min-w-0">
                       <p className="truncate font-semibold">
@@ -306,13 +323,20 @@ export function TeamPage() {
                       </p>
                     )}
                     {canManageTeam && (
-                      <RosterRowActions
-                        player={p}
-                        status={status}
-                        onUnlink={roster.askUnlink}
-                        onRemove={roster.askRemove}
-                      />
+                      <span className="relative z-10">
+                        <RosterRowActions
+                          player={p}
+                          status={status}
+                          onUnlink={roster.askUnlink}
+                          onRemove={roster.askRemove}
+                        />
+                      </span>
                     )}
+                    <ChevronRight
+                      size={18}
+                      className="text-slate-300"
+                      aria-hidden="true"
+                    />
                   </div>
                 </li>
               );
@@ -347,9 +371,7 @@ export function TeamPage() {
       {/* Recent */}
       <section data-reveal style={{ ["--d" as string]: "300ms" }}>
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-base font-semibold">
-            {isPlayer ? "Your recent matches" : "Recent team matches"}
-          </h2>
+          <h2 className="text-base font-semibold">Recent team matches</h2>
           <Link
             to="/add"
             className="flex items-center gap-1 text-sm font-medium text-court-700"
@@ -383,7 +405,7 @@ export function TeamPage() {
                     </span>
                     <div className="min-w-0">
                       <p className="truncate text-sm">
-                        {!isPlayer && (
+                        {!involvesMe(r) && (
                           <>
                             <span className="font-semibold">
                               {ourSide(r)}
@@ -395,7 +417,7 @@ export function TeamPage() {
                       </p>
                       <p className="text-xs text-slate-400">
                         {r.format === "doubles"
-                          ? isPlayer && me && partnerOf(r, me.id)
+                          ? involvesMe(r) && me && partnerOf(r, me.id)
                             ? `Doubles with ${partnerOf(r, me.id)} · `
                             : "Doubles · "
                           : ""}

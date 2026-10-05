@@ -40,6 +40,12 @@ function setDecided({ us, them, tiebreak }: SetRow): boolean {
   return hi === 10 ? lo <= 8 : hi > 10 && lo === hi - 2;
 }
 
+/** The first two sets are both finished and each side won one, so a decider is needed. */
+function setsSplit(sets: SetRow[]): boolean {
+  if (sets.length !== 2 || !sets.every(setDecided)) return false;
+  return sets[0].us! > sets[0].them! !== sets[1].us! > sets[1].them!;
+}
+
 /** Every set has a winner and one side won more of them. */
 function matchDecided(sets: SetRow[]): boolean {
   if (!sets.every(setDecided)) return false;
@@ -139,6 +145,8 @@ export function AddResultPage() {
           : null;
   const outcome: Outcome | null = outcomeOverride ?? autoOutcome;
   const doubles = format === "doubles";
+  // Two finished sets, one each, and no third set yet: the decider still has to be entered.
+  const needsDecider = setsSplit(sets);
 
   // Name the entered opponent(s) in the note labels instead of "they".
   const choiceName = (c: OpponentChoice | null) =>
@@ -176,6 +184,18 @@ export function AddResultPage() {
             .getElementById("scouting")
             ?.scrollIntoView({ behavior: "smooth", block: "start" }),
         250,
+      );
+      return;
+    }
+    // Sets just went one each: close the keyboard and ask what the decider was.
+    if (setsSplit(nextSets) && !setsSplit(sets)) {
+      (document.activeElement as HTMLElement | null)?.blur();
+      setTimeout(
+        () =>
+          document
+            .getElementById("third-set-choice")
+            ?.scrollIntoView({ behavior: "smooth", block: "center" }),
+        200,
       );
       return;
     }
@@ -524,34 +544,56 @@ export function AddResultPage() {
             </div>
           ))}
         </div>
-        {askThirdSet ? (
-          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <p className="text-sm font-medium text-slate-700">
-              Was the third set a full set or a match tiebreak?
+        {needsDecider || askThirdSet ? (
+          <div
+            id="third-set-choice"
+            className={`expand-in mt-3 rounded-2xl border p-4 ${
+              needsDecider
+                ? "border-ball/60 bg-gradient-to-b from-lime-50 to-white"
+                : "border-slate-200 bg-slate-50"
+            }`}
+          >
+            <p className="font-semibold text-slate-900">
+              {needsDecider
+                ? "Sets are split 1–1. How was the decider played?"
+                : "Was the third set a full set or a match tiebreak?"}
             </p>
-            <div className="mt-2 flex flex-wrap gap-2">
+            {needsDecider && (
+              <p className="mt-0.5 text-sm text-slate-500">
+                Pick one and set 3 is added for you.
+              </p>
+            )}
+            <div className="mt-3 grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => addSet(false)}
-                className="btn-secondary px-3 py-1.5"
+                className="lift flex flex-col items-start rounded-xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm active:scale-[.98]"
               >
-                Full set
+                <span className="font-semibold text-slate-900">Full set</span>
+                <span className="text-xs text-slate-500">First to 6 games</span>
               </button>
               <button
                 type="button"
                 onClick={() => addSet(true)}
-                className="btn-secondary px-3 py-1.5"
+                className="lift flex flex-col items-start rounded-xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm active:scale-[.98]"
               >
-                Match tiebreak
+                <span className="font-semibold text-slate-900">
+                  Match tiebreak
+                </span>
+                <span className="text-xs text-slate-500">
+                  First to 10 points
+                </span>
               </button>
+            </div>
+            {!needsDecider && (
               <button
                 type="button"
                 onClick={() => setAskThirdSet(false)}
-                className="btn-ghost px-3 py-1.5 text-slate-500"
+                className="btn-ghost mt-2 px-2 py-1 text-sm text-slate-500"
               >
                 Cancel
               </button>
-            </div>
+            )}
           </div>
         ) : (
           sets.length < 5 && (

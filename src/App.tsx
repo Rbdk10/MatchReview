@@ -12,6 +12,7 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { JoinPage } from "./pages/JoinPage";
 import { TeamPage } from "./pages/TeamPage";
+import { PlayerPage } from "./pages/PlayerPage";
 import { AdminEmpty } from "./components/AdminBar";
 import { BrandMark } from "./components/Brand";
 import { useDarkStatusBar } from "./lib/nativeUi";
@@ -20,7 +21,10 @@ function Splash() {
   return (
     <div className="grid min-h-full place-items-center text-slate-500">
       <div className="flex flex-col items-center gap-3">
-        <BrandMark tile className="breathe size-14 rounded-[22%] shadow-md ring-1 ring-black/10" />
+        <BrandMark
+          tile
+          className="breathe size-14 rounded-[22%] shadow-md ring-1 ring-black/10"
+        />
         <span className="text-sm">Loading…</span>
       </div>
     </div>
@@ -127,6 +131,7 @@ export default function App() {
         <Route path="/add" element={<AddResultPage />} />
         <Route path="/opponents" element={<OpponentsPage />} />
         <Route path="/team" element={<TeamPage />} />
+        <Route path="/team/:playerId" element={<PlayerPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/welcome" element={<HomePage />} />
       </Route>
