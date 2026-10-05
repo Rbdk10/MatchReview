@@ -20,7 +20,7 @@ html, body, #root { height: 100%; }
 body { @apply bg-slate-50 text-slate-900 antialiased; }
 
 @utility input {
-  @apply w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-[15px] text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-court-500 focus:ring-4 focus:ring-court-500/15 disabled:bg-slate-100;
+  @apply w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-base sm:text-[15px] text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-court-500 focus:ring-4 focus:ring-court-500/15 disabled:bg-slate-100;
 }
 @utility label {
   @apply mb-1.5 block text-sm font-medium text-slate-700;
@@ -204,4 +204,9 @@ button:active, a:active { transform: scale(.985); }
 }
 @media (prefers-reduced-motion: reduce) {
   .slide-in-right, .slide-in-left { animation: none; }
+}
+
+/* Phones: 16px minimum on form fields so iOS Safari does not zoom in on focus. */
+@media (max-width: 639px) {
+  input, select, textarea { font-size: max(16px, 1em); }
 }

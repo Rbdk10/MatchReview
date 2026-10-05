@@ -5,8 +5,11 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { forgetInvite, rememberInvite } from "../lib/invite";
 import { GoogleIcon } from "../components/GoogleIcon";
+import { staffRoleLabel, type StaffRole } from "../lib/types";
 
 interface Preview {
+  kind: "player" | "staff";
+  staff_role: StaffRole | null;
   player_name: string;
   team_name: string | null;
   coach_name: string | null;
@@ -14,7 +17,8 @@ interface Preview {
 
 export function JoinPage() {
   const { token = "" } = useParams();
-  const { session, profile, loading, refreshProfile, signOut } = useAuth();
+  const { session, profile, isAdmin, admin, loading, refreshProfile, signOut } =
+    useAuth();
   const navigate = useNavigate();
   const [preview, setPreview] = useState<Preview | null>(null);
   const [checked, setChecked] = useState(false);
@@ -49,13 +53,25 @@ export function JoinPage() {
   async function claim() {
     setBusy(true);
     setError(null);
-    const { error } = await supabase.rpc("claim_invite", { p_token: token });
+    const { data, error } = await supabase.rpc("claim_invite", {
+      p_token: token,
+    });
     if (error) {
       setError(error.message);
       setBusy(false);
       return;
     }
     forgetInvite();
+    const claimed = data as {
+      kind: "player" | "staff";
+      player_id: string;
+      coach_id: string;
+    } | null;
+    if (isAdmin && claimed?.kind === "player") {
+      admin.setViewAs("player");
+      admin.setTeamId(claimed.coach_id);
+      admin.setPlayerId(claimed.player_id);
+    }
     await refreshProfile();
     setBusy(false);
     setDone(true);
@@ -67,8 +83,13 @@ export function JoinPage() {
   }
 
   const team = preview?.team_name || "the team";
+  const isStaffInvite = preview?.kind === "staff";
+  const roleLabel =
+    isStaffInvite && preview?.staff_role
+      ? staffRoleLabel(preview.staff_role)
+      : "player";
   const alreadyCoach =
-    !!profile && profile.onboarded && profile.role === "coach";
+    !isAdmin && !!profile && profile.onboarded && profile.role === "coach";
 
   return (
     <div className="relative flex min-h-full flex-col overflow-hidden bg-court-900 text-white">
@@ -98,8 +119,9 @@ export function JoinPage() {
             </span>
             <h1 className="mt-6 text-3xl font-bold">You&apos;re on {team}.</h1>
             <p className="mt-3 text-slate-300">
-              You can now log your own matches and notes on the opponents you
-              face.
+              {isStaffInvite
+                ? "You can now see every team match and log results and notes on opponents."
+                : "You can now log your own matches and notes on the opponents you face."}
             </p>
             <button
               onClick={() => navigate("/", { replace: true })}
@@ -131,7 +153,8 @@ export function JoinPage() {
               You&apos;re invited
             </p>
             <h1 className="mt-2 text-3xl font-bold leading-tight md:text-4xl">
-              Join {team} as a player.
+              Join {team} as {isStaffInvite ? "" : "a "}
+              {roleLabel}.
             </h1>
             <p className="mt-3 text-slate-300">
               {preview.coach_name
@@ -139,7 +162,9 @@ export function JoinPage() {
                 : "Your coach has"}{" "}
               saved a spot for{" "}
               <strong className="text-white">{preview.player_name}</strong>.
-              Claim it to log your own matches and notes.
+              {isStaffInvite
+                ? "Claim it to follow and log the team's matches."
+                : "Claim it to log your own matches and notes."}
             </p>
 
             <div className="mt-6 flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 p-4">
@@ -176,8 +201,8 @@ export function JoinPage() {
               ) : alreadyCoach ? (
                 <p className="rounded-xl bg-amber-500/20 px-4 py-3 text-sm text-amber-100">
                   You&apos;re signed in with an account that already coaches a
-                  team. Sign out and use a different Google account to join as a
-                  player.
+                  team. Sign out and use a different Google account to join as{" "}
+                  {isStaffInvite ? roleLabel : "a player"}.
                 </p>
               ) : (
                 <>

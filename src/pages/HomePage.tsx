@@ -13,7 +13,8 @@ import {
 } from "../lib/types";
 
 export function HomePage() {
-  const { profile, isPlayer } = useAuth();
+  const { profile, isPlayer, canManageTeam, ownerId, player: me } = useAuth();
+  const mine = me ? `player_id.eq.${me.id},player2_id.eq.${me.id}` : null;
   const [players, setPlayers] = useState<Player[]>([]);
   const [recent, setRecent] = useState<ResultWithOpponent[]>([]);
   const [counts, setCounts] = useState({ results: 0, wins: 0, opponents: 0 });
@@ -28,20 +29,35 @@ export function HomePage() {
         { count: resCount },
         { count: winCount },
       ] = await Promise.all([
-        supabase.from("players").select("*").order("name"),
+        supabase
+          .from("players")
+          .select("*")
+          .eq("coach_id", ownerId!)
+          .order("name"),
         supabase
           .from("results")
           .select(
             "*, opponent:opponents!results_opponent_id_fkey(id, name, school), opponent2:opponents!results_opponent2_id_fkey(id, name, school)",
           )
+          .eq("coach_id", ownerId!)
+          .or(mine ?? "id.not.is.null")
           .order("played_on", { ascending: false })
           .order("created_at", { ascending: false })
           .limit(5),
-        supabase.from("opponents").select("*", { count: "exact", head: true }),
-        supabase.from("results").select("*", { count: "exact", head: true }),
+        supabase
+          .from("opponents")
+          .select("*", { count: "exact", head: true })
+          .eq("coach_id", ownerId!),
         supabase
           .from("results")
           .select("*", { count: "exact", head: true })
+          .eq("coach_id", ownerId!)
+          .or(mine ?? "id.not.is.null"),
+        supabase
+          .from("results")
+          .select("*", { count: "exact", head: true })
+          .eq("coach_id", ownerId!)
+          .or(mine ?? "id.not.is.null")
           .eq("outcome", "win"),
       ]);
       setPlayers((p as Player[]) ?? []);
@@ -129,7 +145,7 @@ export function HomePage() {
         </section>
       )}
 
-      {!loading && players.length === 0 && !isPlayer && (
+      {!loading && players.length === 0 && canManageTeam && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Add your players first so you can log who played.{" "}
           <Link to="/profile" className="font-semibold underline">

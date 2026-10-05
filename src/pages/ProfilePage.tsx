@@ -2,8 +2,14 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Check, Plus } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
-import { SPORTS, type Player, type Sport } from "../lib/types";
+import { SPORTS, staffRoleLabel, type Player, type Sport } from "../lib/types";
 import { useRosterAdmin } from "../lib/useRosterAdmin";
+import { StaffSection } from "../components/StaffSection";
+import {
+  SchoolPicker,
+  schoolFromProfile,
+  type School,
+} from "../components/SchoolPicker";
 import {
   RosterLead,
   RosterRowActions,
@@ -11,8 +17,8 @@ import {
 } from "../components/RosterRowActions";
 
 export function ProfilePage() {
-  const { isPlayer } = useAuth();
-  return isPlayer ? <PlayerProfile /> : <CoachProfile />;
+  const { canManageTeam } = useAuth();
+  return canManageTeam ? <CoachProfile /> : <PlayerProfile />;
 }
 
 function initials(name: string) {
@@ -25,10 +31,12 @@ function initials(name: string) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Player                                                              */
+/* Player or staff                                                     */
 /* ------------------------------------------------------------------ */
 function PlayerProfile() {
-  const { session, profile, player, refreshProfile, signOut } = useAuth();
+  const { session, profile, player, staff, refreshProfile, signOut } =
+    useAuth();
+  const roleLabel = staff ? staffRoleLabel(staff.role) : "Player";
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -53,7 +61,7 @@ function PlayerProfile() {
       <header data-reveal>
         <h1 className="text-2xl font-bold">Your profile</h1>
         <p className="mt-1 text-slate-500">
-          You&apos;re signed in as a player.
+          You&apos;re signed in as {staff ? "staff" : "a player"}.
         </p>
       </header>
 
@@ -63,12 +71,12 @@ function PlayerProfile() {
         style={{ ["--d" as string]: "90ms" }}
       >
         <span className="grid size-12 place-items-center rounded-full bg-court-100 text-base font-bold text-court-800">
-          {initials(player?.name ?? profile?.full_name ?? "P")}
+          {initials(player?.name ?? staff?.name ?? profile?.full_name ?? "P")}
         </span>
         <div>
-          <p className="font-semibold">{player?.name}</p>
+          <p className="font-semibold">{player?.name ?? staff?.name}</p>
           <p className="text-sm text-slate-500">
-            Player on{" "}
+            {roleLabel} on{" "}
             <span className="font-medium text-court-700">
               {profile?.team_name || "your team"}
             </span>
@@ -92,8 +100,9 @@ function PlayerProfile() {
           placeholder="Your name"
         />
         <p className="mt-3 text-sm text-slate-500">
-          You can log results and notes for matches you played. Your coach
-          manages the team and its players.
+          {staff
+            ? "You can see every team match and log results and notes for the team. Your head coach manages the roster and staff."
+            : "You can log results and notes for matches you played. Your coach manages the team and its players."}
         </p>
       </section>
 
@@ -119,11 +128,14 @@ function PlayerProfile() {
 /* Coach                                                               */
 /* ------------------------------------------------------------------ */
 function CoachProfile() {
-  const { session, profile, refreshProfile, signOut } = useAuth();
-  const userId = session!.user.id;
+  const { profile, ownerId, refreshProfile, signOut } = useAuth();
+  // The team being edited: your own, or the one an admin is viewing.
+  const userId = ownerId!;
 
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
-  const [teamName, setTeamName] = useState(profile?.team_name ?? "");
+  const [school, setSchool] = useState<School | null>(
+    schoolFromProfile(profile),
+  );
   const [sport, setSport] = useState<Sport | null>(profile?.sport ?? null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [newPlayer, setNewPlayer] = useState("");
@@ -134,7 +146,7 @@ function CoachProfile() {
 
   useEffect(() => {
     setFullName(profile?.full_name ?? "");
-    setTeamName(profile?.team_name ?? "");
+    setSchool(schoolFromProfile(profile));
     setSport(profile?.sport ?? null);
   }, [profile]);
 
@@ -142,6 +154,7 @@ function CoachProfile() {
     supabase
       .from("players")
       .select("*")
+      .eq("coach_id", userId)
       .order("name")
       .then(({ data }) => setPlayers((data as Player[]) ?? []));
   }, []);
@@ -153,13 +166,14 @@ function CoachProfile() {
 
   async function saveProfile() {
     if (!sport) return setError("Pick the sport you coach first.");
+    if (!school) return setError("Choose your school from the list.");
     setSaving(true);
     setError(null);
     const { error } = await supabase
       .from("profiles")
       .update({
         full_name: fullName.trim() || null,
-        team_name: teamName.trim() || null,
+        school_id: school?.id ?? null,
         sport,
         onboarded: true,
       })
@@ -201,15 +215,14 @@ function CoachProfile() {
           />
         </div>
         <div>
-          <label className="label" htmlFor="teamName">
-            Team name
+          <label className="label" htmlFor="teamSchool">
+            School / team
           </label>
-          <input
-            id="teamName"
-            className="input"
-            value={teamName}
-            onChange={(e) => setTeamName(e.target.value)}
-            placeholder="e.g. Westlake Varsity Tennis"
+          <SchoolPicker
+            id="teamSchool"
+            value={school}
+            onChange={setSchool}
+            placeholder="Search US schools"
           />
         </div>
       </section>
@@ -316,6 +329,8 @@ function CoachProfile() {
           })}
         </ul>
       </section>
+
+      <StaffSection />
 
       {(error || roster.error) && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">

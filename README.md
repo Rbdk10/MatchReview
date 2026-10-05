@@ -85,6 +85,14 @@ What a player can do, enforced by row level security in `supabase/migrations/202
 
 A coach can **Unlink** a joined account (the row and its results stay, and the spot can be invited again) or regenerate an invite link. Claiming, unlinking and invite previews go through the `claim_invite`, `unlink_player` and `invite_preview` database functions.
 
+## Schools
+
+Coaches pick their school, and opponents' schools are picked, from a searchable list of 2,337 US colleges and universities (`schools` table, from the MIT-licensed Hipo university-domains-list). Search matches names and abbreviations such as "MSU". Free text is not accepted: database triggers derive `profiles.team_name` and `opponents.school` from `school_id`, so every team and opponent is grouped by the same school record. The team tab shows a short form (e.g. "MSU").
+
+## Admin
+
+Accounts with `profiles.is_admin = true` (currently reubendeklerk071@gmail.com) can read and manage every team. The flag can only be set in the database. Admins get a switcher in the sidebar (and under the mobile header) to view the app as a **coach** or a **player**, choosing the team and, for the player view, which player.
+
 ## App flow
 
 1. **Sign in with Google** on the auth sheet. Google is the only sign-in method; email/password sign-up is disabled in Supabase.

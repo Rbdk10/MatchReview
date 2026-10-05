@@ -3,10 +3,13 @@ import { useReveal } from "../lib/useReveal";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Home, Plus, School, Users, UserCircle, LogOut } from "lucide-react";
 import { useAuth } from "../lib/auth";
+import { staffRoleLabel } from "../lib/types";
+import { AdminBar } from "./AdminBar";
+import { teamShortName } from "../lib/types";
 
 /** The team tab is named after the team itself, e.g. "MSU". */
 function teamLabel(name?: string | null) {
-  return name?.trim() || "My team";
+  return teamShortName(name);
 }
 
 function Logo() {
@@ -23,7 +26,7 @@ function Logo() {
 }
 
 export function Layout() {
-  const { profile, signOut } = useAuth();
+  const { profile, staff, signOut } = useAuth();
   const team = teamLabel(profile?.team_name);
   const navItems = [
     { to: "/", label: "Home", icon: Home, end: true },
@@ -95,12 +98,17 @@ export function Layout() {
             </NavLink>
           ))}
         </nav>
-        <div className="relative mt-auto border-t border-court-800 pt-4">
+        <div className="relative mt-auto">
+          <AdminBar />
+        </div>
+        <div className="relative mt-4 border-t border-court-800 pt-4">
           <p className="truncate text-sm font-medium">
-            {profile?.full_name || "Coach"}
+            {profile?.full_name || staff?.name || "Coach"}
           </p>
           <p className="truncate text-xs text-slate-400">
-            <span className="capitalize">{profile?.role ?? "coach"}</span>
+            <span className="capitalize">
+              {staff ? staffRoleLabel(staff.role) : (profile?.role ?? "coach")}
+            </span>
             {profile?.team_name ? ` · ${profile.team_name}` : ""}
           </p>
           <button
@@ -124,6 +132,9 @@ export function Layout() {
             <Plus size={18} strokeWidth={3} /> Result
           </NavLink>
         </header>
+        <div className="md:hidden">
+          <AdminBar compact />
+        </div>
 
         <main
           ref={mainRef}

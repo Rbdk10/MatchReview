@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Check, Minus, Plus, Trophy, User, Users } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
+import { ShotTagPicker } from "../components/ShotTagPicker";
 import type {
   MatchFormat,
   Opponent,
@@ -26,7 +27,7 @@ const defaultSets = (format: MatchFormat) =>
   format === "doubles" ? [emptySet()] : [emptySet(), emptySet()];
 
 export function AddResultPage() {
-  const { ownerId, isPlayer, player: me } = useAuth();
+  const { ownerId, isPlayer, canManageTeam, player: me } = useAuth();
   // Results and new opponents always belong to the team (the coach's id).
   const userId = ownerId!;
   const navigate = useNavigate();
@@ -46,6 +47,8 @@ export function AddResultPage() {
   const [outcomeOverride, setOutcomeOverride] = useState<Outcome | null>(null);
   const [didWell, setDidWell] = useState("");
   const [struggled, setStruggled] = useState("");
+  const [didWellTags, setDidWellTags] = useState<string[]>([]);
+  const [struggledTags, setStruggledTags] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,8 +59,16 @@ export function AddResultPage() {
   useEffect(() => {
     async function load() {
       const [{ data: p }, { data: o }] = await Promise.all([
-        supabase.from("players").select("*").order("name"),
-        supabase.from("opponents").select("*").order("name"),
+        supabase
+          .from("players")
+          .select("*")
+          .eq("coach_id", userId)
+          .order("name"),
+        supabase
+          .from("opponents")
+          .select("*")
+          .eq("coach_id", userId)
+          .order("name"),
       ]);
       const ps = (p as Player[]) ?? [];
       const os = (o as Opponent[]) ?? [];
@@ -108,6 +119,21 @@ export function AddResultPage() {
   const outcome: Outcome | null = outcomeOverride ?? autoOutcome;
   const doubles = format === "doubles";
 
+  // Name the entered opponent(s) in the note labels instead of "they".
+  const choiceName = (c: OpponentChoice | null) =>
+    (c?.kind === "existing" ? c.opponent.name : (c?.name ?? ""))
+      .trim()
+      .split(/\s+/)[0];
+  const oppNames = (doubles ? [opp1, opp2] : [opp1])
+    .map(choiceName)
+    .filter(Boolean);
+  const subject =
+    oppNames.length > 0
+      ? oppNames.join(" & ")
+      : doubles
+        ? "the pair"
+        : "the opponent";
+
   function updateSet(i: number, key: keyof SetScore, raw: string) {
     const v =
       raw === "" ? null : Math.max(0, Math.min(99, parseInt(raw, 10) || 0));
@@ -123,7 +149,7 @@ export function AddResultPage() {
       .insert({
         coach_id: userId,
         name: choice.name,
-        school: choice.school.trim() || null,
+        school_id: choice.school?.id ?? null,
       })
       .select("*")
       .single();
@@ -181,6 +207,8 @@ export function AddResultPage() {
         sets: completeSets,
         did_well: didWell.trim() || null,
         struggled_with: struggled.trim() || null,
+        did_well_tags: didWellTags,
+        struggled_tags: struggledTags,
         notes: notes.trim() || null,
       });
       if (error) throw error;
@@ -202,6 +230,8 @@ export function AddResultPage() {
     setOutcomeOverride(null);
     setDidWell("");
     setStruggled("");
+    setDidWellTags([]);
+    setStruggledTags([]);
     setNotes("");
     setSaved(null);
     setError(null);
@@ -253,7 +283,7 @@ export function AddResultPage() {
         </p>
       </header>
 
-      {players.length === 0 && !isPlayer && (
+      {players.length === 0 && canManageTeam && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           You haven&apos;t added any players yet.{" "}
           <Link to="/profile" className="font-semibold underline">
@@ -498,35 +528,41 @@ export function AddResultPage() {
           {doubles ? "Notes on the pair" : "Opponent notes"}
         </h2>
         <div>
-          <label className="label text-court-800" htmlFor="didWell">
-            What they did well
+          <p className="label text-court-800">What {subject} did well</p>
+          <ShotTagPicker
+            value={didWellTags}
+            onChange={setDidWellTags}
+            tone="good"
+            label="Did well tags"
+          />
+          <label className="sr-only" htmlFor="didWell">
+            Notes on what {subject} did well
           </label>
           <textarea
             id="didWell"
-            className="input min-h-24"
+            className="input mt-3 min-h-20"
             value={didWell}
             onChange={(e) => setDidWell(e.target.value)}
-            placeholder={
-              doubles
-                ? "Strong at the net, good poaching, served well as a pair…"
-                : "Big first serve, strong forehand cross-court, patient in rallies…"
-            }
+            placeholder={"Written notes (optional)"}
           />
         </div>
         <div>
-          <label className="label text-amber-800" htmlFor="struggled">
-            What they struggled with
+          <p className="label text-amber-800">What {subject} struggled with</p>
+          <ShotTagPicker
+            value={struggledTags}
+            onChange={setStruggledTags}
+            tone="bad"
+            label="Struggled with tags"
+          />
+          <label className="sr-only" htmlFor="struggled">
+            Notes on what {subject} struggled with
           </label>
           <textarea
             id="struggled"
-            className="input min-h-24"
+            className="input mt-3 min-h-20"
             value={struggled}
             onChange={(e) => setStruggled(e.target.value)}
-            placeholder={
-              doubles
-                ? "Lobs over the net player, weak returns down the middle…"
-                : "Weak backhand under pressure, slow to the net, second serve attackable…"
-            }
+            placeholder={"Written notes (optional)"}
           />
         </div>
         <div>

@@ -6,12 +6,12 @@ import {
   type ReactNode,
   type SetStateAction,
 } from "react";
-import { Check, Copy, RefreshCw, Share2 } from "lucide-react";
 import { supabase } from "./supabase";
 import { useAuth } from "./auth";
 import { inviteLink } from "./invite";
 import type { Player } from "./types";
-import { ConfirmModal, Modal } from "../components/Modal";
+import { ConfirmModal } from "../components/Modal";
+import { InviteLinkModal } from "../components/InviteLinkModal";
 
 /**
  * Coach-only roster management shared by the Team and Profile pages:
@@ -19,8 +19,8 @@ import { ConfirmModal, Modal } from "../components/Modal";
  * Render `dialogs` once somewhere in the page.
  */
 export function useRosterAdmin(setPlayers: Dispatch<SetStateAction<Player[]>>) {
-  const { session, profile, isPlayer } = useAuth();
-  const userId = session?.user.id ?? "";
+  const { ownerId, profile, canManageTeam } = useAuth();
+  const userId = ownerId ?? "";
 
   const [invites, setInvites] = useState<Record<string, string>>({}); // player_id -> token
   const [adding, setAdding] = useState(false);
@@ -28,15 +28,15 @@ export function useRosterAdmin(setPlayers: Dispatch<SetStateAction<Player[]>>) {
   const [toUnlink, setToUnlink] = useState<Player | null>(null);
   const [inviting, setInviting] = useState<Player | null>(null);
   const [inviteBusy, setInviteBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isPlayer) return;
+    if (!canManageTeam) return;
     supabase
       .from("player_invites")
       .select("player_id, token")
+      .eq("coach_id", userId)
       .then(({ data }) => {
         const map: Record<string, string> = {};
         for (const row of (data as { player_id: string; token: string }[]) ??
@@ -44,7 +44,7 @@ export function useRosterAdmin(setPlayers: Dispatch<SetStateAction<Player[]>>) {
           map[row.player_id] = row.token;
         setInvites(map);
       });
-  }, [isPlayer]);
+  }, [canManageTeam, userId]);
 
   const addPlayer = useCallback(
     async (rawName: string): Promise<boolean> => {
@@ -73,7 +73,6 @@ export function useRosterAdmin(setPlayers: Dispatch<SetStateAction<Player[]>>) {
   /** Opens the invite dialog, creating the link the first time. */
   async function openInvite(p: Player, regenerate = false) {
     setInviting(p);
-    setCopied(false);
     setError(null);
     if (invites[p.id] && !regenerate) return;
     setInviteBusy(true);
@@ -122,34 +121,8 @@ export function useRosterAdmin(setPlayers: Dispatch<SetStateAction<Player[]>>) {
     setToUnlink(null);
   }
 
-  async function copyLink(url: string) {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setError(
-        "Could not copy automatically. Select the link and copy it manually.",
-      );
-    }
-  }
-
-  async function shareLink(p: Player, url: string) {
-    try {
-      await navigator.share({
-        title: "Join our team on MatchReview",
-        text: `${p.name}, claim your spot on ${profile?.team_name || "our team"}:`,
-        url,
-      });
-    } catch {
-      /* share sheet dismissed */
-    }
-  }
-
   const inviteUrl =
     inviting && invites[inviting.id] ? inviteLink(invites[inviting.id]) : "";
-  const canShare =
-    typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   /** "joined" | "pending" | "none" for a roster row. */
   const statusOf = (p: Player): "joined" | "pending" | "none" =>
@@ -157,57 +130,21 @@ export function useRosterAdmin(setPlayers: Dispatch<SetStateAction<Player[]>>) {
 
   const dialogs: ReactNode = (
     <>
-      <Modal
+      <InviteLinkModal
         open={inviting !== null}
         title={`Invite ${inviting?.name ?? ""}`}
-        onClose={() => setInviting(null)}
-      >
-        <p className="text-sm text-slate-600">
-          Send this link to <strong>{inviting?.name}</strong>. When they sign in
-          with Google they claim this spot on{" "}
-          {profile?.team_name || "your team"}. The link works once.
-        </p>
-        {inviteBusy || !inviteUrl ? (
-          <p className="mt-4 text-sm text-slate-500">Creating link…</p>
-        ) : (
+        message={
           <>
-            <input
-              className="input mt-4 font-mono text-xs"
-              readOnly
-              value={inviteUrl}
-              onFocus={(e) => e.currentTarget.select()}
-              aria-label="Invite link"
-            />
-            <div className="mt-4 flex flex-wrap justify-end gap-2">
-              <button
-                className="btn-ghost text-slate-500"
-                onClick={() => inviting && openInvite(inviting, true)}
-              >
-                <RefreshCw size={15} /> New link
-              </button>
-              {canShare && (
-                <button
-                  className="btn-secondary"
-                  onClick={() => inviting && shareLink(inviting, inviteUrl)}
-                >
-                  <Share2 size={15} /> Share
-                </button>
-              )}
-              <button
-                className="btn-primary"
-                onClick={() => copyLink(inviteUrl)}
-              >
-                {copied ? (
-                  <Check size={15} strokeWidth={3} />
-                ) : (
-                  <Copy size={15} />
-                )}{" "}
-                {copied ? "Copied" : "Copy link"}
-              </button>
-            </div>
+            Send this link to <strong>{inviting?.name}</strong>. When they sign
+            in with Google they claim this spot on{" "}
+            {profile?.team_name || "your team"}. The link works once.
           </>
-        )}
-      </Modal>
+        }
+        url={inviteBusy ? "" : inviteUrl}
+        shareText={`${inviting?.name ?? ""}, claim your spot on ${profile?.team_name || "our team"}:`}
+        onRegenerate={() => inviting && openInvite(inviting, true)}
+        onClose={() => setInviting(null)}
+      />
 
       <ConfirmModal
         open={toUnlink !== null}

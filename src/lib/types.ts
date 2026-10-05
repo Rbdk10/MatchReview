@@ -8,12 +8,37 @@ export interface Profile {
   id: string;
   full_name: string | null;
   team_name: string | null;
+  school_id: number | null;
   sport: Sport | null;
   onboarded: boolean;
   role: Role;
+  is_admin: boolean;
 }
 
-export type Role = "coach" | "player";
+export type Role = "coach" | "player" | "staff";
+
+export type StaffRole = "assistant_coach" | "team_manager" | "sid";
+
+export const STAFF_ROLES: { id: StaffRole; label: string }[] = [
+  { id: "assistant_coach", label: "Assistant Coach" },
+  { id: "team_manager", label: "Team Manager" },
+  { id: "sid", label: "SID" },
+];
+
+export function staffRoleLabel(role: StaffRole): string {
+  return STAFF_ROLES.find((r) => r.id === role)?.label ?? role;
+}
+
+export interface Staff {
+  id: string;
+  coach_id: string;
+  name: string;
+  role: StaffRole;
+  /** The signed-in account that claimed this staff spot, if any. */
+  user_id: string | null;
+  claimed_at: string | null;
+  created_at: string;
+}
 
 export interface Player {
   id: string;
@@ -57,6 +82,8 @@ export interface Result {
   sets: SetScore[];
   did_well: string | null;
   struggled_with: string | null;
+  did_well_tags: string[] | null;
+  struggled_tags: string[] | null;
   notes: string | null;
   created_at: string;
 }
@@ -89,4 +116,18 @@ export function formatDate(iso: string): string {
     month: "short",
     year: "numeric",
   });
+}
+
+/** Short label for a team/school, e.g. "Montana State University - Bozeman" -> "MSU". */
+export function teamShortName(name?: string | null): string {
+  const full = name?.trim();
+  if (!full) return "My team";
+  if (full.length <= 14) return full;
+  const base = full.split(/\s+-\s+|\s*\(/)[0];
+  const stop = new Set(["of", "the", "and", "at", "for", "in", "&", "a", "an"]);
+  const acronym = (base.match(/[A-Za-z][A-Za-z'.]*/g) ?? [])
+    .filter((w) => !stop.has(w.toLowerCase()))
+    .map((w) => w[0].toUpperCase())
+    .join("");
+  return acronym.length >= 2 ? acronym : full;
 }

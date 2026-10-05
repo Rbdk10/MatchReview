@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, School, UserPlus, X } from "lucide-react";
+import { ChevronDown, School as SchoolIcon, UserPlus, X } from "lucide-react";
 import type { Opponent } from "../lib/types";
+import { SchoolPicker, type School } from "./SchoolPicker";
 
 export type OpponentChoice =
   | { kind: "existing"; opponent: Opponent }
-  | { kind: "new"; name: string; school: string };
+  | { kind: "new"; name: string; school: School | null };
 
 interface Props {
   label: string;
@@ -67,7 +68,7 @@ export function OpponentPicker({
   function pickNew() {
     const name = query.trim();
     if (!name) return;
-    onChange({ kind: "new", name, school: "" });
+    onChange({ kind: "new", name, school: null });
     setOpen(false);
   }
   function clear() {
@@ -101,19 +102,17 @@ export function OpponentPicker({
             ) : (
               <div className="mt-2">
                 <label className="label text-court-900">
-                  <School size={14} className="mr-1 inline" /> School they play
+                  <SchoolIcon size={14} className="mr-1 inline" /> School they play
                   for{" "}
                   <span className="font-normal text-court-800/60">
                     (optional)
                   </span>
                 </label>
-                <input
-                  className="input"
+                <SchoolPicker
                   value={value.school}
-                  onChange={(e) =>
-                    onChange({ ...value, school: e.target.value })
-                  }
-                  placeholder="e.g. Westlake High"
+                  onChange={(school) => onChange({ ...value, school })}
+                  placeholder="Search US schools"
+                  optional
                 />
               </div>
             )}

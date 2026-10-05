@@ -11,6 +11,8 @@ import {
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { Modal } from "../components/Modal";
+import { tallyTags } from "../lib/shotTags";
+import { SchoolPicker, type School } from "../components/SchoolPicker";
 import {
   formatDate,
   formatSets,
@@ -31,16 +33,17 @@ export function OpponentsPage() {
   const [params, setParams] = useSearchParams();
   const [openId, setOpenId] = useState<string | null>(params.get("open"));
   const openedRef = useRef<HTMLLIElement>(null);
-  const { ownerId } = useAuth();
+  const { ownerId, player: me } = useAuth();
+  const mine = me ? `player_id.eq.${me.id},player2_id.eq.${me.id}` : null;
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
-  const [newSchool, setNewSchool] = useState("");
+  const [newSchool, setNewSchool] = useState<School | null>(null);
   const [addBusy, setAddBusy] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
   function openAdd() {
     setNewName("");
-    setNewSchool("");
+    setNewSchool(null);
     setAddError(null);
     setAdding(true);
   }
@@ -56,7 +59,7 @@ export function OpponentsPage() {
       .insert({
         coach_id: ownerId,
         name,
-        school: newSchool.trim() || null,
+        school_id: newSchool?.id ?? null,
       })
       .select("*")
       .single();
@@ -84,10 +87,16 @@ export function OpponentsPage() {
   useEffect(() => {
     async function load() {
       const [{ data: o }, { data: r }] = await Promise.all([
-        supabase.from("opponents").select("*").order("name"),
+        supabase
+          .from("opponents")
+          .select("*")
+          .eq("coach_id", ownerId!)
+          .order("name"),
         supabase
           .from("results")
           .select("*")
+          .eq("coach_id", ownerId!)
+          .or(mine ?? "id.not.is.null")
           .order("played_on", { ascending: false })
           .order("created_at", { ascending: false }),
       ]);
@@ -222,6 +231,12 @@ export function OpponentsPage() {
           const open = openId === opp.id;
           const didWell = opp.results.filter((r) => r.did_well);
           const struggled = opp.results.filter((r) => r.struggled_with);
+          const didWellTags = tallyTags(
+            opp.results.map((r) => r.did_well_tags),
+          );
+          const struggledTags = tallyTags(
+            opp.results.map((r) => r.struggled_tags),
+          );
           return (
             <li
               key={opp.id}
@@ -278,13 +293,18 @@ export function OpponentsPage() {
                     </Link>
                   </div>
 
-                  {(didWell.length > 0 || struggled.length > 0) && (
+                  {(didWell.length > 0 ||
+                    struggled.length > 0 ||
+                    didWellTags.length > 0 ||
+                    struggledTags.length > 0) && (
                     <div className="mb-4 grid gap-3 sm:grid-cols-2">
                       <div className="rounded-xl border border-court-200 bg-court-50 p-3">
                         <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-court-800">
-                          <ThumbsUp size={14} /> Does well
+                          <ThumbsUp size={14} /> {opp.name.split(" ")[0]} does
+                          well
                         </p>
-                        {didWell.length === 0 ? (
+                        <TagTally tags={didWellTags} tone="good" />
+                        {didWell.length === 0 && didWellTags.length === 0 ? (
                           <p className="text-sm text-court-800/60">
                             Nothing noted yet.
                           </p>
@@ -303,9 +323,12 @@ export function OpponentsPage() {
                       </div>
                       <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
                         <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-amber-800">
-                          <TrendingDown size={14} /> Struggles with
+                          <TrendingDown size={14} /> {opp.name.split(" ")[0]}{" "}
+                          struggles with
                         </p>
-                        {struggled.length === 0 ? (
+                        <TagTally tags={struggledTags} tone="bad" />
+                        {struggled.length === 0 &&
+                        struggledTags.length === 0 ? (
                           <p className="text-sm text-amber-800/60">
                             Nothing noted yet.
                           </p>
@@ -410,12 +433,12 @@ export function OpponentsPage() {
               School{" "}
               <span className="font-normal text-slate-400">(optional)</span>
             </label>
-            <input
+            <SchoolPicker
               id="oppSchool"
-              className="input"
               value={newSchool}
-              onChange={(e) => setNewSchool(e.target.value)}
-              placeholder="e.g. Westlake High"
+              onChange={setNewSchool}
+              placeholder="Search US schools"
+              optional
             />
           </div>
           {addError && (
@@ -450,4 +473,32 @@ function theirSide(r: Result, names: Map<string, string>): string {
   const a = names.get(r.opponent_id) ?? "Unknown";
   const b = r.opponent2_id ? names.get(r.opponent2_id) : null;
   return b ? `${a} & ${b}` : a;
+}
+
+/** Tag chips with how many matches each was noted in, most common first. */
+function TagTally({
+  tags,
+  tone,
+}: {
+  tags: { tag: string; count: number }[];
+  tone: "good" | "bad";
+}) {
+  if (tags.length === 0) return null;
+  const cls =
+    tone === "good"
+      ? "border-court-300 bg-white text-court-900"
+      : "border-amber-300 bg-white text-amber-900";
+  return (
+    <div className="mb-2 flex flex-wrap gap-1.5">
+      {tags.map(({ tag, count }) => (
+        <span
+          key={tag}
+          className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cls}`}
+        >
+          {tag}
+          {count > 1 && <span className="ml-1 opacity-60">×{count}</span>}
+        </span>
+      ))}
+    </div>
+  );
 }

@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { CountUp } from "../components/CountUp";
 import { useRosterAdmin } from "../lib/useRosterAdmin";
+import { StaffSection } from "../components/StaffSection";
 import {
   RosterLead,
   RosterRowActions,
@@ -12,6 +13,7 @@ import {
 } from "../components/RosterRowActions";
 import {
   formatDate,
+  teamShortName,
   formatSets,
   ourSide,
   type Opponent,
@@ -29,7 +31,8 @@ function initials(name: string) {
 }
 
 export function TeamPage() {
-  const { profile, isPlayer, player: me } = useAuth();
+  const { profile, isPlayer, canManageTeam, player: me, ownerId } = useAuth();
+  const mine = me ? `player_id.eq.${me.id},player2_id.eq.${me.id}` : null;
   const [players, setPlayers] = useState<Player[]>([]);
   const [results, setResults] = useState<Result[]>([]);
   const [opponents, setOpponents] = useState<Map<string, Opponent>>(new Map());
@@ -40,13 +43,19 @@ export function TeamPage() {
   useEffect(() => {
     async function load() {
       const [{ data: p }, { data: r }, { data: o }] = await Promise.all([
-        supabase.from("players").select("*").order("name"),
+        supabase
+          .from("players")
+          .select("*")
+          .eq("coach_id", ownerId!)
+          .order("name"),
         supabase
           .from("results")
           .select("*")
+          .eq("coach_id", ownerId!)
+          .or(mine ?? "id.not.is.null")
           .order("played_on", { ascending: false })
           .order("created_at", { ascending: false }),
-        supabase.from("opponents").select("*"),
+        supabase.from("opponents").select("*").eq("coach_id", ownerId!),
       ]);
       setPlayers((p as Player[]) ?? []);
       setResults((r as Result[]) ?? []);
@@ -115,7 +124,7 @@ export function TeamPage() {
           <div className="relative flex flex-wrap items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-4">
               <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-ball text-xl font-extrabold text-court-950 shadow-md">
-                {initials(teamName)}
+                {teamShortName(teamName).slice(0, 4)}
               </span>
               <div className="min-w-0">
                 <p className="flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide text-court-200">
@@ -129,13 +138,13 @@ export function TeamPage() {
                 </h1>
                 <p className="mt-1 text-court-100/80">
                   {players.length} player{players.length === 1 ? "" : "s"}
-                  {isPlayer
-                    ? ""
-                    : ` · coached by ${profile?.full_name || "you"}`}
+                  {canManageTeam
+                    ? ` · coached by ${profile?.full_name || "you"}`
+                    : ""}
                 </p>
               </div>
             </div>
-            {!isPlayer && (
+            {canManageTeam && (
               <Link
                 to="/profile"
                 className="btn bg-white/10 text-white hover:bg-white/20"
@@ -184,7 +193,7 @@ export function TeamPage() {
         <div className="mb-2 flex flex-wrap items-end justify-between gap-2">
           <div>
             <h2 className="text-base font-semibold">Roster</h2>
-            {!isPlayer && (
+            {canManageTeam && (
               <p className="text-sm text-slate-500">
                 Add players, then invite each one to claim their spot and log
                 their own matches.
@@ -198,7 +207,7 @@ export function TeamPage() {
           )}
         </div>
 
-        {!isPlayer && (
+        {canManageTeam && (
           <form
             onSubmit={async (e) => {
               e.preventDefault();
@@ -233,7 +242,7 @@ export function TeamPage() {
           <p className="text-sm text-slate-500">Loading…</p>
         ) : players.length === 0 ? (
           <div className="card p-6 text-center text-sm text-slate-500">
-            {isPlayer
+            {!canManageTeam
               ? "No players on the roster yet."
               : "No players yet. Add your first one above."}
           </div>
@@ -250,7 +259,7 @@ export function TeamPage() {
                   className={`card flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-4 ${isMe ? "border-court-300" : ""}`}
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    {isPlayer ? (
+                    {!canManageTeam ? (
                       <span className="grid size-10 shrink-0 place-items-center rounded-full bg-court-100 text-sm font-bold text-court-800">
                         {initials(p.name)}
                       </span>
@@ -271,7 +280,7 @@ export function TeamPage() {
                         )}
                       </p>
                       <p className="text-xs text-slate-400">
-                        {!isPlayer && (
+                        {canManageTeam && (
                           <>
                             <RosterStatus status={status} /> ·{" "}
                           </>
@@ -294,7 +303,7 @@ export function TeamPage() {
                         <span className="text-red-600">{rec?.l ?? 0}L</span>
                       </p>
                     )}
-                    {!isPlayer && (
+                    {canManageTeam && (
                       <RosterRowActions
                         player={p}
                         status={status}
@@ -309,6 +318,8 @@ export function TeamPage() {
           </ul>
         )}
       </section>
+
+      <StaffSection />
 
       {/* Schools faced */}
       {schools.length > 0 && (

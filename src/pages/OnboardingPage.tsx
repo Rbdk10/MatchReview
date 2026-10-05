@@ -5,6 +5,11 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { SPORTS, type Player, type Sport } from "../lib/types";
 import { Words } from "../components/Words";
+import {
+  SchoolPicker,
+  schoolFromProfile,
+  type School,
+} from "../components/SchoolPicker";
 
 const STEPS = ["welcome", "team", "sport", "players", "done"] as const;
 type Step = (typeof STEPS)[number];
@@ -17,7 +22,10 @@ export function OnboardingPage() {
   const [step, setStep] = useState<Step>("welcome");
   const [dir, setDir] = useState<1 | -1>(1);
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
-  const [teamName, setTeamName] = useState(profile?.team_name ?? "");
+  const [school, setSchool] = useState<School | null>(
+    schoolFromProfile(profile),
+  );
+  const teamName = school?.name ?? "";
   const [sport, setSport] = useState<Sport | null>(profile?.sport ?? "tennis");
   const [players, setPlayers] = useState<Player[]>([]);
   const [newPlayer, setNewPlayer] = useState("");
@@ -42,7 +50,7 @@ export function OnboardingPage() {
     step === "welcome"
       ? fullName.trim().length > 0
       : step === "team"
-        ? teamName.trim().length > 0
+        ? !!school
         : step === "sport"
           ? !!sport
           : true;
@@ -65,7 +73,7 @@ export function OnboardingPage() {
         .from("profiles")
         .update({
           full_name: fullName.trim(),
-          team_name: teamName.trim(),
+          school_id: school?.id ?? null,
           sport,
           onboarded: true,
         })
@@ -199,24 +207,15 @@ export function OnboardingPage() {
           {step === "team" && (
             <Slide
               eyebrow={`Step 2 of ${STEPS.length - 1}`}
-              title="Name your team."
-              body="The school, club or squad you coach. This shows on your dashboard."
+              title="Choose your school."
+              body="Pick the school you coach from the list. This names your team and keeps results grouped properly."
             >
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void next();
-                }}
-              >
-                <input
-                  className="input-dark"
-                  value={teamName}
-                  onChange={(e) => setTeamName(e.target.value)}
-                  placeholder="e.g. Westlake Varsity Tennis"
-                  autoComplete="organization"
-                  autoFocus
-                />
-              </form>
+              <SchoolPicker
+                value={school}
+                onChange={setSchool}
+                placeholder="Search US schools"
+                dark
+              />
             </Slide>
           )}
 

@@ -12,6 +12,7 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { JoinPage } from "./pages/JoinPage";
 import { TeamPage } from "./pages/TeamPage";
+import { AdminEmpty } from "./components/AdminBar";
 
 function Splash() {
   return (
@@ -23,7 +24,7 @@ function Splash() {
   );
 }
 
-/** Shown to a player account whose coach removed or unlinked their team spot. */
+/** Shown to a player or staff account whose coach removed or unlinked their team spot. */
 function NoTeam() {
   const { session, refreshProfile, signOut } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -32,7 +33,7 @@ function NoTeam() {
     setBusy(true);
     await supabase
       .from("profiles")
-      .update({ role: "coach", onboarded: false, team_name: null })
+      .update({ role: "coach", onboarded: false, school_id: null })
       .eq("id", session.user.id);
     await refreshProfile();
     setBusy(false);
@@ -69,18 +70,33 @@ function NoTeam() {
 }
 
 function Protected() {
-  const { session, profile, player, isPlayer, loading } = useAuth();
+  const {
+    session,
+    profile,
+    player,
+    staff,
+    isPlayer,
+    isStaff,
+    isAdmin,
+    ownerId,
+    scopeKey,
+    loading,
+  } = useAuth();
   const location = useLocation();
   if (loading) return <Splash />;
   if (!session) return <Navigate to="/auth" replace />;
   if (!profile) return <Splash />;
+  if (isAdmin) {
+    if (!ownerId || (isPlayer && !player)) return <AdminEmpty />;
+    return <Layout key={scopeKey} />;
+  }
   if (!profile.onboarded) {
     // Someone who opened an invite link goes back to it instead of the coach setup.
     const token = pendingInvite();
     if (token) return <Navigate to={`/join/${token}`} replace />;
     return <OnboardingPage />;
   }
-  if (isPlayer && !player) return <NoTeam />;
+  if ((isPlayer && !player) || (isStaff && !staff)) return <NoTeam />;
   if (location.pathname === "/welcome") return <Navigate to="/" replace />;
   return <Layout />;
 }
