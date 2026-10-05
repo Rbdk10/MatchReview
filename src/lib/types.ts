@@ -140,3 +140,21 @@ export function partnerOf(
   if (!r.player2_name) return null;
   return r.player_id === playerId ? r.player2_name : r.player_name;
 }
+
+/**
+ * Capitalise each part of a person's name: "john smith" → "John Smith", "MARY-JANE O'NEIL" → "Mary-Jane O'Neil".
+ * A part typed in mixed case (e.g. "McDonald") keeps its inner capitals.
+ */
+export function formatPersonName(name: string): string {
+  return name
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[^\s\-']+/g, (part) => {
+      const rest =
+        part.slice(1) === part.slice(1).toUpperCase() ||
+        part.slice(1) === part.slice(1).toLowerCase()
+          ? part.slice(1).toLowerCase()
+          : part.slice(1);
+      return part.charAt(0).toUpperCase() + rest;
+    });
+}

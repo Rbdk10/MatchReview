@@ -17,6 +17,7 @@ import {
   formatDate,
   formatSets,
   ourSide,
+  formatPersonName,
   partnerOf,
   type Opponent,
   type Result,
@@ -51,7 +52,7 @@ export function OpponentsPage() {
 
   async function addOpponent(e: FormEvent) {
     e.preventDefault();
-    const name = newName.trim();
+    const name = formatPersonName(newName);
     if (!name || !ownerId) return;
     setAddBusy(true);
     setAddError(null);

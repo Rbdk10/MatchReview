@@ -4,12 +4,13 @@ import { Check, Plus, Trophy, User, Users } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { ScoutingCard } from "../components/ShotTagPicker";
-import type {
-  MatchFormat,
-  Opponent,
-  Outcome,
-  Player,
-  SetScore,
+import {
+  formatPersonName,
+  type MatchFormat,
+  type Opponent,
+  type Outcome,
+  type Player,
+  type SetScore,
 } from "../lib/types";
 import {
   OpponentPicker,
@@ -174,7 +175,7 @@ export function AddResultPage() {
       .from("opponents")
       .insert({
         coach_id: userId,
-        name: choice.name,
+        name: formatPersonName(choice.name),
         school_id: choice.school?.id ?? null,
       })
       .select("*")

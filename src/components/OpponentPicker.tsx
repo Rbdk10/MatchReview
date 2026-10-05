@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, School as SchoolIcon, UserPlus, X } from "lucide-react";
-import type { Opponent } from "../lib/types";
+import { formatPersonName, type Opponent } from "../lib/types";
 import { SchoolPicker, type School } from "./SchoolPicker";
 
 export type OpponentChoice =
@@ -66,7 +66,7 @@ export function OpponentPicker({
     setOpen(false);
   }
   function pickNew() {
-    const name = query.trim();
+    const name = formatPersonName(query);
     if (!name) return;
     onChange({ kind: "new", name, school: null });
     setOpen(false);
@@ -173,7 +173,7 @@ export function OpponentPicker({
                   onClick={pickNew}
                   className="flex w-full items-center gap-2 border-t border-slate-100 px-3.5 py-2.5 text-left text-sm font-semibold text-court-700 hover:bg-court-50"
                 >
-                  <UserPlus size={16} /> Add “{query.trim()}” as a new opponent
+                  <UserPlus size={16} /> Add “{formatPersonName(query)}” as a new opponent
                 </button>
               )}
               {filtered.length === 0 && !query.trim() && (
