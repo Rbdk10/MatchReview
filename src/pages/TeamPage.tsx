@@ -216,7 +216,7 @@ export function TeamPage() {
             className="card mb-3 flex gap-2 p-3"
           >
             <input
-              className="input"
+              className="input min-w-0"
               value={newPlayer}
               onChange={(e) => setNewPlayer(e.target.value)}
               placeholder="Add a player by name"

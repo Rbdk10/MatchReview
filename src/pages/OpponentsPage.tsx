@@ -165,7 +165,7 @@ export function OpponentsPage() {
               : `${rows.length} registered · tap one to see your notes`}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={openAdd}

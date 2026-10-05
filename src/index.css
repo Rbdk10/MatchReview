@@ -17,6 +17,8 @@
 }
 
 html, body, #root { height: 100%; }
+/* Never let anything widen the page past the screen: iOS would zoom the whole app out to fit. */
+html, body { overflow-x: clip; }
 body { @apply bg-slate-50 text-slate-900 antialiased; }
 
 @utility input {
@@ -140,7 +142,10 @@ body { @apply bg-slate-50 text-slate-900 antialiased; }
 
 /* Springy hover lift + glow */
 .lift { transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease, border-color .35s ease; will-change: transform; }
-.lift:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 18px 40px -18px rgba(18,83,55,.45); }
+/* Hover lift only on real pointers: on touch, :hover sticks after a tap and the scaled card overflows. */
+@media (hover: hover) {
+  .lift:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 18px 40px -18px rgba(18,83,55,.45); }
+}
 .lift:active { transform: translateY(0) scale(.995); }
 
 /* Pulsing ring behind the primary Add buttons */

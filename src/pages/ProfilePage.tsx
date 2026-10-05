@@ -282,7 +282,7 @@ function CoachProfile() {
 
         <form onSubmit={addPlayer} className="mt-4 flex gap-2">
           <input
-            className="input"
+            className="input min-w-0"
             value={newPlayer}
             onChange={(e) => setNewPlayer(e.target.value)}
             placeholder="Player name"
