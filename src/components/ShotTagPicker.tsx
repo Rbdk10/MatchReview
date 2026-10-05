@@ -84,11 +84,11 @@ export function ShotTagPicker({ value, onChange, tone, label }: Props) {
       {open && (
         <div className="expand-in mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
           <div className="flex items-center justify-between gap-2">
-            <ol className="flex items-center gap-1.5 text-xs font-semibold">
+            <ol className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs font-semibold">
               {STEPS.map((s, i) => (
                 <li
                   key={s}
-                  className={`rounded-full px-2.5 py-1 ${i === step ? accent : i < step ? "bg-slate-200 text-slate-700" : "text-slate-400"}`}
+                  className={`whitespace-nowrap rounded-full px-2.5 py-1 ${i === step ? accent : i < step ? "bg-slate-200 text-slate-700" : "text-slate-400"}`}
                 >
                   {i + 1}. {i < step ? parts[i] : s}
                 </li>
